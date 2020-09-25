@@ -1,0 +1,18 @@
+{
+  "dbDefinitions": //If you want to support a new DB just add it in the file
+  [
+    {
+      "name":  "SQLServer",
+      "fromDB": "false",
+      "toDB": "true",
+      "className": "SQLServer"
+    },
+    {
+      "name": "SQLite",
+      "fromDB": "true",
+      "toDB": "false",
+      "className": "SQLite"
+    }
+  ]
+  
+}

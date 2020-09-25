@@ -7,6 +7,9 @@ using System.Configuration;
 using System.Collections.Specialized;
 using System.Diagnostics;
 using Octopus.modules.messages;
+using System.Data;
+using Newtonsoft.Json;
+using System.IO;
 
 namespace Octopus
 {
@@ -14,6 +17,7 @@ namespace Octopus
     {
         static void Main(string[] args)
         {
+            List<DataTable> dataTableList = new List<DataTable>();
             List<string> tableList;
 
             string prefix = ConfigurationManager.AppSettings.Get("prefix") + "_";
@@ -31,13 +35,21 @@ namespace Octopus
             if (tableList.Count() != 0)
             {
                 Debug.WriteLine("Read Config file succesfully");
+
+                foreach (string table in tableList) //Convert the list of strings to Data Tables
+                {
+                    DataTable dataTable = new DataTable();
+                    dataTable.TableName = table;
+                    dataTableList.Add(dataTable);
+                }
+
+                Run(dataTableList);
             }
             else
             {
                 Messages.WriteError("No tables specified in App.Config");
             }
-
-
+            Console.Read();
         }
 
         /// <summary>
@@ -49,11 +61,7 @@ namespace Octopus
             var applicationSettings = ConfigurationManager.GetSection("TableList") as NameValueCollection;
             List<string> tableList = new List<string>();
 
-            if (applicationSettings.Count == 0)
-            {
-                Console.WriteLine("Application Settings are not defined");
-            }
-            else
+            if (applicationSettings.Count != 0)
             {
                 foreach (var key in applicationSettings.AllKeys)
                 {
@@ -63,5 +71,62 @@ namespace Octopus
 
             return tableList;
         }
+
+        /// <summary>
+        /// Run called after Main recovering the config values
+        /// </summary>
+        /// <param name="dataTableList"></param>
+        static void Run(List<DataTable> dataTableList)
+        {
+            string fromDB = ConfigurationManager.AppSettings.Get("fromDB");
+            string toDB = ConfigurationManager.AppSettings.Get("toDB");
+
+            if (string.IsNullOrEmpty(fromDB) || string.IsNullOrEmpty(toDB))
+            {
+                Messages.WriteError("The configuration of fromDB or toDB is empty");
+            }
+            else
+            {
+                ReadDbDefinitions(fromDB, toDB);
+
+                foreach (DataTable dataTable in dataTableList)
+                {
+                    Console.WriteLine(dataTable.TableName);
+                }
+            }
+        }
+        class DbDefinitionList
+        {
+            public List<DbDefinition> dbDefinitions { get; set; }
+
+        }
+
+        class DbDefinition
+        {
+            public string name { get; set; }
+            public bool fromDB { get; set; }
+            public bool toDB { get; set; }
+            public string className { get; set; }
+        }
+
+        public static void ReadDbDefinitions(string fromDB, string toDB)
+        {
+            // read file into a string and deserialize JSON to a type
+            DbDefinitionList dbList = JsonConvert.DeserializeObject<DbDefinitionList>(File.ReadAllText(@".\DbDefinitions.json"));
+
+            foreach (DbDefinition dbDefinition in dbList.dbDefinitions)
+            {
+                if (dbDefinition.name == fromDB)
+                { 
+                
+                }
+
+                if (dbDefinition.name == toDB)
+                { 
+                
+                }
+            }
+        }
+
     }
 }
