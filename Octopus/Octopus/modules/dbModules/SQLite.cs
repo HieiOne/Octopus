@@ -42,5 +42,10 @@ namespace Octopus.modules.dbModules
         {
             throw new NotImplementedException();
         }
+
+        public override void OpenReader(int limit)
+        {
+            throw new NotImplementedException();
+        }
     }
 }
