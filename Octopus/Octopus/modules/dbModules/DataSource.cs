@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -49,5 +50,10 @@ namespace Octopus.modules.dbModules
         /// TTSCommit in SQL
         /// </summary>
         public abstract void CommitTransaction();
+
+        /// <summary>
+        /// Reads the table name and adds all columns and registers into the DataTable object
+        /// </summary>
+        public abstract void ReadTable(DataTable dataTable);
     }
 }

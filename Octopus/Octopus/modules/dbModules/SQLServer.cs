@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Configuration;
+using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
 using System.Text;
@@ -80,6 +81,11 @@ namespace Octopus.modules.dbModules
         }
 
         public override void OpenReader(int limit)
+        {
+            throw new NotImplementedException();
+        }
+        
+        public override void ReadTable(DataTable dataTable)
         {
             throw new NotImplementedException();
         }

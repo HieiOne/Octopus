@@ -93,6 +93,7 @@ namespace Octopus
                 foreach (DataTable dataTable in dataTableList)
                 {
                     Console.WriteLine(dataTable.TableName);
+                    fromDataSource.ReadTable(dataTable);
                 }
             }
         }
