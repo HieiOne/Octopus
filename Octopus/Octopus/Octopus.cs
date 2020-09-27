@@ -139,6 +139,7 @@ namespace Octopus
                 {
                     if (!dbDefinition.fromDB)
                     {
+                        Messages.WriteError($"{fromDB} is not implemented yet as origin BD");
                         throw new NotImplementedException();
                     }
 
@@ -153,6 +154,7 @@ namespace Octopus
                 {
                     if (!dbDefinition.toDB)
                     {
+                        Messages.WriteError($"{toDB} is not implemented yet as destiny BD");
                         throw new NotImplementedException();
                     }
 
@@ -167,6 +169,7 @@ namespace Octopus
 
             if (fromDataSource is null || toDataSource is null) //If any datasource was not found for whatever reason, throw
             {
+                Messages.WriteError($"{fromDB} or {toDB} module not found");
                 throw new NotImplementedException();
             }
 
