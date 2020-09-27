@@ -10,6 +10,7 @@ using Octopus.modules.messages;
 using System.Data;
 using Newtonsoft.Json;
 using System.IO;
+using Octopus.modules.dbModules;
 
 namespace Octopus
 {
@@ -87,7 +88,10 @@ namespace Octopus
             }
             else
             {
-                ReadDbDefinitions(fromDB, toDB);
+                (DataSource fromDataSource, DataSource toDataSource) = ReadDbDefinitions(fromDB, toDB);
+
+                fromDataSource.Connect();
+                toDataSource.Connect();
 
                 foreach (DataTable dataTable in dataTableList)
                 {
@@ -109,23 +113,52 @@ namespace Octopus
             public string className { get; set; }
         }
 
-        public static void ReadDbDefinitions(string fromDB, string toDB)
+        public static (DataSource fromDataSource, DataSource toDataSource) ReadDbDefinitions(string fromDB, string toDB)
         {
             // read file into a string and deserialize JSON to a type
             DbDefinitionList dbList = JsonConvert.DeserializeObject<DbDefinitionList>(File.ReadAllText(@".\DbDefinitions.json"));
+            DataSource fromDataSource = null, toDataSource = null;
 
+
+            //TODO Filter results to get only the two ones we want
             foreach (DbDefinition dbDefinition in dbList.dbDefinitions)
             {
-                if (dbDefinition.name == fromDB)
-                { 
-                
+                if (dbDefinition.name == fromDB) // When matching the selected Datasource and has the value from DB true
+                {
+                    if (!dbDefinition.fromDB)
+                    {
+                        throw new NotImplementedException();
+                    }
+
+                    string objectToInstantiate = $"Octopus.modules.dbModules.{dbDefinition.className}, Octopus";
+                    var objectType = Type.GetType(objectToInstantiate);
+
+                    if (!(objectType is null))
+                        fromDataSource = Activator.CreateInstance(objectType) as DataSource;
                 }
 
-                if (dbDefinition.name == toDB)
-                { 
-                
+                if (dbDefinition.name == toDB) // When matching the selected Datasource and has the value to DB true
+                {
+                    if (!dbDefinition.toDB)
+                    {
+                        throw new NotImplementedException();
+                    }
+
+                    string objectToInstantiate = $"Octopus.modules.dbModules.{dbDefinition.className}, Octopus";
+                    var objectType = Type.GetType(objectToInstantiate);
+
+                    if (!(objectType is null))
+                        toDataSource = Activator.CreateInstance(objectType) as DataSource;
                 }
             }
+
+
+            if (fromDataSource is null || toDataSource is null)
+            {
+                throw new NotImplementedException();
+            }
+
+            return (fromDataSource, toDataSource);
         }
 
     }
