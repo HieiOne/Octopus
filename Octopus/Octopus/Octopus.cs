@@ -90,8 +90,8 @@ namespace Octopus
             {
                 (DataSource fromDataSource, DataSource toDataSource) = ReadDbDefinitions(fromDB, toDB);
 
-                fromDataSource.Connect();
-                toDataSource.Connect();
+                fromDataSource.Connect(); // Initial testing of functionality
+                toDataSource.Connect(); // Initial testing of functionality
 
                 foreach (DataTable dataTable in dataTableList)
                 {
@@ -99,12 +99,19 @@ namespace Octopus
                 }
             }
         }
+
+        /// <summary>
+        /// List composed of DbDefinitions used to run a foreach
+        /// </summary>
         class DbDefinitionList
         {
             public List<DbDefinition> dbDefinitions { get; set; }
 
         }
 
+        /// <summary>
+        /// Class for the DbDefinition JSON
+        /// </summary>
         class DbDefinition
         {
             public string name { get; set; }
@@ -113,12 +120,17 @@ namespace Octopus
             public string className { get; set; }
         }
 
+        /// <summary>
+        /// Reads JSON Dbdefinitions and tries to instantiate the objects requested by App.config file
+        /// </summary>
+        /// <param name="fromDB"></param>
+        /// <param name="toDB"></param>
+        /// <returns></returns>
         public static (DataSource fromDataSource, DataSource toDataSource) ReadDbDefinitions(string fromDB, string toDB)
         {
             // read file into a string and deserialize JSON to a type
             DbDefinitionList dbList = JsonConvert.DeserializeObject<DbDefinitionList>(File.ReadAllText(@".\DbDefinitions.json"));
             DataSource fromDataSource = null, toDataSource = null;
-
 
             //TODO Filter results to get only the two ones we want
             foreach (DbDefinition dbDefinition in dbList.dbDefinitions)
@@ -153,7 +165,7 @@ namespace Octopus
             }
 
 
-            if (fromDataSource is null || toDataSource is null)
+            if (fromDataSource is null || toDataSource is null) //If any datasource was not found for whatever reason, throw
             {
                 throw new NotImplementedException();
             }
