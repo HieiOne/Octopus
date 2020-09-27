@@ -90,9 +90,6 @@ namespace Octopus
             {
                 (DataSource fromDataSource, DataSource toDataSource) = ReadDbDefinitions(fromDB, toDB);
 
-                fromDataSource.Connect(); // Initial testing of functionality
-                toDataSource.Connect(); // Initial testing of functionality
-
                 foreach (DataTable dataTable in dataTableList)
                 {
                     Console.WriteLine(dataTable.TableName);
