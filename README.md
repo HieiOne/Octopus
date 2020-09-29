@@ -25,7 +25,7 @@ This project is still not in v1, meaning the core isn't fully ready for any use 
 * Bulk creation of tables and moving the data (latter one optional)
 * (I don't know to say it any better) Allow the usage of the software as a library for anyone who wishes to implement a module and generate a DataTable (with columns and rows both optional) fast.
 * Configuration to copy certain columns in each column
-* Sync Mode (What for deleting and creating/inserting when we can sync the data)
+* Sync Mode: (Why deleting and inserting all over again when we can just sync the data)
 	* Maybe scheduled tasks?
 * Copy data from a table to a table with different column names, allowing user to determine the relation of columns with different names
 
