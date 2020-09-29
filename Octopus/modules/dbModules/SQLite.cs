@@ -21,7 +21,7 @@ namespace Octopus.modules.dbModules
         public Dictionary<string, Type> SQLTypeToCShartpType = new Dictionary<string, Type>();
         public Dictionary<Type, string> CShartpTypeToSQLType = new Dictionary<Type, string>();
 
-        public SQLite() //Conexión a BD SQLite
+        public SQLite() //Construct, creates the connection string and generates types from SQL to C#
         {
             string connectionString = ConfigurationManager.ConnectionStrings["SQLiteConnectionString"].ConnectionString;
 
@@ -30,6 +30,7 @@ namespace Octopus.modules.dbModules
                 Messages.WriteError("SQLiteConnectionString not found, please specify it in the App.Config");
                 throw new NotImplementedException();
             }
+
             sqliteConnection = new SqliteConnection(connectionString);
             GenerateTypeDictionaries(); //Generate type dictionaries for mapping types
         }
@@ -102,6 +103,10 @@ namespace Octopus.modules.dbModules
             throw new NotImplementedException();
         }
 
+        /// <summary>
+        /// This class must call other methods to create the Schema (Columns + Keys) of the table and add the datarows
+        /// </summary>
+        /// <param name="dataTable"></param>
         public override void ReadTable(DataTable dataTable)
         {
             Connect(); // Connect to the DB
@@ -124,22 +129,30 @@ namespace Octopus.modules.dbModules
             {
                 while (dataReader.Read())
                 {
-                    string dataType = dataReader.GetString(2);
-                    string dimension = dataType.Split('(', ')')[1]; //We get value between parenthesis
+                    string dimension,dataType = dataReader.GetString(2);
                     int lenght = -1, precision = 0;
 
-                    if (!string.IsNullOrEmpty(dimension))
+                    // We use this try to catch the IndexOutOfRangeException because of splitting and not stop the program
+                    try
                     {
+                        dimension = dataType.Split('(', ')')[1]; //We get value between parenthesis to get lenght
                         dataType = dataType.Split('(', ')')[0];
-                        if (dimension.Contains(",")) //Has precision
+                        if (dimension.Contains(",")) //If the value is separated by commas it must be a REAL with precision
                         {
                             lenght = Convert.ToInt32(dimension.Split(',')[0]);
                             precision = Convert.ToInt32(dimension.Split(',')[1]);
                         }
-                        else 
+                        else
                         {
                             lenght = Convert.ToInt32(dimension);
                         }
+                    }
+                    catch (IndexOutOfRangeException)
+                    {
+                        //We do nothing we just keep everything as is
+                        //Since Split fails because there's no "(" and ")" it doesn't have lenght nor precision and every will have their default values
+                        //DataType it's kept as is since it already is a full-self type (without lenght or precision, usually a DATETIME)
+                        //throw;
                     }
 
                     DataColumn dataColumn = new DataColumn();
@@ -149,13 +162,21 @@ namespace Octopus.modules.dbModules
                     dataColumn.AllowDBNull = !dataReader.GetBoolean(3); //En SQL Lite el campo es NOT NULL entonces revertimos el valor
                     dataColumn.DefaultValue = dataReader.IsDBNull(4) ? null : dataReader.GetString(4);
                     dataColumn.Unique = dataReader.GetInt32(5) != 0 ? true : false;
-                    dataColumn.ExtendedProperties.Add("SQL Type", dataReader.GetString(2));
+                    dataColumn.ExtendedProperties.Add("SQL_Type", dataReader.GetString(2));
                     dataColumn.ExtendedProperties.Add("Precision", precision);
-                    dataColumn.MaxLength = lenght;
+                    dataColumn.ExtendedProperties.Add("Lenght", lenght);
+                    dataColumn.ExtendedProperties.Add("Primary_Key_Order", dataReader.GetInt32(5));
 
-                    //TODO Column of primary keys
                     dataTable.Columns.Add(dataColumn);
                 }
+
+                //Add primary key columns to dataTable
+                DataColumn[] dataColumns = dataTable.Columns.Cast<DataColumn>()
+                                                            .Where(x => x.Unique is true) // We don't need a order here because in the query is already sorted.
+                                                            .OrderBy(z => z.ExtendedProperties["Primary_Key_Order"])
+                                                            .ToArray();
+                dataTable.PrimaryKey = dataColumns;
+
                 Messages.WriteSuccess($"Generated the schema of the table {dataTable.TableName} succesfully");
             }
             else

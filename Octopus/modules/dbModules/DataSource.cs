@@ -11,14 +11,14 @@ namespace Octopus.modules.dbModules
     public abstract class DataSource
     {
         /// <summary>
-        /// Hashtable which converts SQL Type to C# Type
+        /// Dictionary which converts SQL Type to C# Type
         /// </summary>
         /// 
         /*
         protected abstract Dictionary<string, Type> SQLTypeToCShartpType { get; set; }
         //TODO Forced Dictionaries
         /// <summary>
-        /// Hashtable which converts C# Type to SQL Type
+        /// Dictionary which converts C# Type to SQL Type
         /// </summary>
         protected abstract Dictionary<Type, string> CShartpTypeToSQLType { get; set; }
         */
@@ -72,6 +72,7 @@ namespace Octopus.modules.dbModules
 
         /// <summary>
         /// Reads the table name and adds all columns and registers into the DataTable object
+        /// This class must call other methods to create the Schema (Columns + Keys) of the table and add the datarows
         /// </summary>
         public abstract void ReadTable(DataTable dataTable);
     }
