@@ -3,7 +3,7 @@ This project is still not in v1, meaning the core isn't fully ready for any use 
 
  ==================
  
-# *License GNU GPL, check out the full notice in LICENSE file*
+# *License GNU GPL v3, check out the full notice in LICENSE file*
  ==================
 
 
