@@ -172,8 +172,8 @@ namespace Octopus.modules.dbModules
 
                 //Add primary key columns to dataTable
                 DataColumn[] dataColumns = dataTable.Columns.Cast<DataColumn>()
-                                                            .Where(x => x.Unique is true) // We don't need a order here because in the query is already sorted.
-                                                            .OrderBy(z => z.ExtendedProperties["Primary_Key_Order"])
+                                                            .Where(x => x.Unique is true)
+                                                            .OrderBy(z => z.ExtendedProperties["Primary_Key_Order"]) //Order by pk id
                                                             .ToArray();
                 dataTable.PrimaryKey = dataColumns;
 

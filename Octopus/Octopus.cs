@@ -131,8 +131,12 @@ namespace Octopus
             DbDefinitionList dbList = JsonConvert.DeserializeObject<DbDefinitionList>(File.ReadAllText(@".\DbDefinitions.json"));
             DataSource fromDataSource = null, toDataSource = null;
 
-            //TODO Filter results to get only the two ones we want
-            foreach (DbDefinition dbDefinition in dbList.dbDefinitions)
+            //Create array with the values so we can use it later to filter the dbDefinitionList
+            string[] bdConfig = new string[] { fromDB, toDB};
+            foreach (DbDefinition dbDefinition in dbList.dbDefinitions
+                                                            .Where(x => bdConfig.Contains(x.name))
+                                                            .ToList<DbDefinition>()
+            )
             {
                 if (dbDefinition.name == fromDB) // When matching the selected Datasource and has the value from DB true
                 {
