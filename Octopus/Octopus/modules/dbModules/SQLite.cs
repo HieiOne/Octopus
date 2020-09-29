@@ -1,9 +1,11 @@
 ﻿using Microsoft.Data.Sqlite;
 using Octopus.modules.messages;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
+using System.Data.Common;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -13,7 +15,10 @@ namespace Octopus.modules.dbModules
     class SQLite : DataSource
     {
         private readonly SqliteConnection sqliteConnection;
-        private readonly SqliteDataReader dataReader;
+        private SqliteDataReader dataReader;
+
+        public override Dictionary<string, Type> SQLTypeToCShartpType => new Dictionary<string, Type>();
+        public override Dictionary<Type, string> CShartpTypeToSQLType => new Dictionary<Type, string>();
 
         public SQLite() //Conexión a BD SQLite
         {
@@ -25,6 +30,7 @@ namespace Octopus.modules.dbModules
                 throw new NotImplementedException();
             }
             sqliteConnection = new SqliteConnection(connectionString);
+            GenerateTypeDictionaries(); //Generate type dictionaries for mapping types
         }
 
         public override void BeginTransaction()
@@ -34,7 +40,7 @@ namespace Octopus.modules.dbModules
 
         public override void CloseReader()
         {
-            throw new NotImplementedException();
+            dataReader.Close();
         }
 
         public override void CommitTransaction()
@@ -75,12 +81,22 @@ namespace Octopus.modules.dbModules
             throw new NotImplementedException();
         }
 
-        public override void OpenReader()
+        public override void OpenReader(string query)
         {
-            throw new NotImplementedException();
+            SqliteCommand readSqlite = new SqliteCommand(query, sqliteConnection);
+
+            try
+            {
+                dataReader = readSqlite.ExecuteReader();
+            }
+            catch (SqliteException e) when (e.ErrorCode == -2147467259)
+            {
+                Messages.WriteError(e.Message);
+                //return 0; //Error
+            }
         }
 
-        public override void OpenReader(int limit)
+        public override void OpenReader(string query, int limit)
         {
             throw new NotImplementedException();
         }
@@ -89,9 +105,95 @@ namespace Octopus.modules.dbModules
         {
             Connect(); // Connect to the DB
 
-            dataTable = sqliteConnection.GetSchema(dataTable.TableName);
+            GetSchemaTable(dataTable);
 
             Disconnect(); // Disconnects from the DB
         }
+
+        /// <summary>
+        /// Adds the dataschema to the datatable
+        /// </summary>
+        /// <param name="dataTable"></param>
+        private void GetSchemaTable(DataTable dataTable)
+        {
+            string query = $"SELECT [cid],[name],[type],[notnull],[dflt_value],[pk] FROM PRAGMA_TABLE_INFO('{dataTable.TableName}')";
+            OpenReader(query);
+
+            if (dataReader.HasRows)
+            {
+                while (dataReader.Read())
+                {
+                    DataColumn dataColumn = new DataColumn();
+                    dataColumn.ColumnName = dataReader.GetString(1);
+                    //dataColumn.DataType = typeof(Int32);//MappingType(dataReader.GetString(2)); //We call mapping types to determine the type
+                    dataColumn.AllowDBNull = !dataReader.GetBoolean(3); //En SQL Lite el campo es NOT NULL entonces revertimos el valor
+                    dataColumn.DefaultValue = dataReader.IsDBNull(4) ? null : dataReader.GetString(4);
+                    dataColumn.Unique = dataReader.GetInt32(5) != 0 ? true : false;
+                    dataColumn.ExtendedProperties.Add("SQL Type", dataReader.GetString(2));
+                    //TODO Column of primary keys
+                    dataTable.Columns.Add(dataColumn);
+                }
+                Messages.WriteSuccess($"Generated the schema of the table {dataTable.TableName} succesfully");
+            }
+            else
+            {
+                Messages.WriteError($"The table {dataTable.TableName} has no columns or wasn't found");
+                throw new NotImplementedException();
+            }
+
+            CloseReader();
+        }
+
+        /// <summary>
+        /// Transforms the SQLite Type to C# type
+        /// </summary>
+        /// <param name="sqlType"></param>
+        /// <returns></returns>
+        private (Type type,int Lenght,int precision) MappingType(string sqlType)
+        {
+            if (sqlType.Contains("INT")) //Integer
+            {
+                return (typeof(Int32), 0, 0);
+            }
+
+            if (sqlType.Contains("REAL")) //Integer
+            {
+                return (typeof(decimal), 0, 0);
+            }
+
+            if (sqlType.Contains("TEXT"))
+            {
+                return (typeof(string), 0, 0);
+            }
+
+            if (sqlType == "BLOB")
+            {
+                //sqlType = "VARBINARY (MAX)";
+                return (typeof(string), 0, 0);
+            }
+
+            if (sqlType == "DATETIME")
+            {
+                return (typeof(DateTime), 0, 0);
+            }
+
+            return (typeof(string), 0, 0);
+        }
+
+        /// <summary>
+        /// Replenishes the dictionaries SQLTypeToCShartpType & CShartpTypeToSQLType
+        /// </summary>
+        private void GenerateTypeDictionaries()
+        {
+            AddToDictionaries("INTEGER", typeof(Int32));
+
+            //Local function to add to both dictionaries
+            void AddToDictionaries(string sqlType, Type cSharpType)
+            {
+                SQLTypeToCShartpType.Add(sqlType, cSharpType);
+                CShartpTypeToSQLType.Add(cSharpType, sqlType);
+            }
+        }
+
     }
 }

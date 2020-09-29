@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
@@ -9,6 +10,21 @@ namespace Octopus.modules.dbModules
 {
     public abstract class DataSource
     {
+        /// <summary>
+        /// Hashtable which converts SQL Type to C# Type
+        /// </summary>
+        public abstract Dictionary<string,Type> SQLTypeToCShartpType { get;}
+
+        /// <summary>
+        /// Hashtable which converts C# Type to SQL Type
+        /// </summary>
+        public abstract Dictionary<Type, string> CShartpTypeToSQLType { get;}
+
+        /// <summary>
+        /// Forces users to add the method to generate the dictionaries
+        /// </summary>
+        public abstract void GenerateDictionaries();
+
         /// <summary>
         /// Opens connection to the datasource
         /// </summary>
@@ -22,13 +38,13 @@ namespace Octopus.modules.dbModules
         /// <summary>
         /// SELECT query
         /// </summary>
-        public abstract void OpenReader();
+        public abstract void OpenReader(string query);
 
         /// <summary>
         /// SELECT query with limit of results
         /// </summary>
         /// <param name="limit"></param>
-        public abstract void OpenReader(int limit);
+        public abstract void OpenReader(string query, int limit);
 
         /// <summary>
         /// Closes reader used for SELECT query

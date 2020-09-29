@@ -1,5 +1,6 @@
 ﻿using Octopus.modules.messages;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
@@ -14,6 +15,8 @@ namespace Octopus.modules.dbModules
     {        
         private readonly SqlConnection sqlConnection;
         private readonly SqlTransaction sqlTransaction;
+        public override Dictionary<string, Type> SQLTypeToCShartpType => throw new NotImplementedException();
+        public override Dictionary<Type, string> CShartpTypeToSQLType => throw new NotImplementedException();
 
         public SQLServer() //Initial construct of SQL Server
         {
@@ -75,12 +78,12 @@ namespace Octopus.modules.dbModules
             throw new NotImplementedException();
         }
 
-        public override void OpenReader()
+        public override void OpenReader(string query)
         {
             throw new NotImplementedException();
         }
 
-        public override void OpenReader(int limit)
+        public override void OpenReader(string query, int limit)
         {
             throw new NotImplementedException();
         }
@@ -88,6 +91,18 @@ namespace Octopus.modules.dbModules
         public override void ReadTable(DataTable dataTable)
         {
             throw new NotImplementedException();
+        }
+
+        private void GenerateTypeDictionaries()
+        {
+            AddToDictionaries("INTEGER", typeof(Int32));
+
+            //Local function to add to both dictionaries
+            void AddToDictionaries(string sqlType, Type cSharpType)
+            {
+                SQLTypeToCShartpType.Add(sqlType, cSharpType);
+                CShartpTypeToSQLType.Add(cSharpType, sqlType);
+            }
         }
     }
 }
