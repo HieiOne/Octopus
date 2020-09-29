@@ -168,47 +168,10 @@ namespace Octopus.modules.dbModules
         }
 
         /// <summary>
-        /// Transforms the SQLite Type to C# type
-        /// </summary>
-        /// <param name="sqlType"></param>
-        /// <returns></returns>
-        private (Type type,int Lenght,int precision) MappingType(string sqlType)
-        {
-            if (sqlType.Contains("INT")) //Integer
-            {
-                return (typeof(Int32), 0, 0);
-            }
-
-            if (sqlType.Contains("REAL")) //Integer
-            {
-                return (typeof(decimal), 0, 0);
-            }
-
-            if (sqlType.Contains("TEXT"))
-            {
-                return (typeof(string), 0, 0);
-            }
-
-            if (sqlType == "BLOB")
-            {
-                //sqlType = "VARBINARY (MAX)";
-                return (typeof(string), 0, 0);
-            }
-
-            if (sqlType == "DATETIME")
-            {
-                return (typeof(DateTime), 0, 0);
-            }
-
-            return (typeof(string), 0, 0);
-        }
-
-        /// <summary>
         /// Replenishes the dictionaries SQLTypeToCShartpType & CShartpTypeToSQLType
         /// </summary>
         public override void GenerateTypeDictionaries()
         {
-            //TODO Lenght and precision of fields
             AddToDictionaries("INTEGER", typeof(Int32));
             AddToDictionaries("TEXT", typeof(string));
             AddToDictionaries("REAL", typeof(decimal));

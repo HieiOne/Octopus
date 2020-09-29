@@ -92,6 +92,7 @@ namespace Octopus
 
                 foreach (DataTable dataTable in dataTableList)
                 {
+                    //TODO check for SQL Injection
                     Console.WriteLine(dataTable.TableName);
                     fromDataSource.ReadTable(dataTable);
                 }
