@@ -13,17 +13,20 @@ namespace Octopus.modules.dbModules
         /// <summary>
         /// Hashtable which converts SQL Type to C# Type
         /// </summary>
-        public abstract Dictionary<string,Type> SQLTypeToCShartpType { get;}
-
+        /// 
+        /*
+        protected abstract Dictionary<string, Type> SQLTypeToCShartpType { get; set; }
+        //TODO Forced Dictionaries
         /// <summary>
         /// Hashtable which converts C# Type to SQL Type
         /// </summary>
-        public abstract Dictionary<Type, string> CShartpTypeToSQLType { get;}
+        protected abstract Dictionary<Type, string> CShartpTypeToSQLType { get; set; }
+        */
 
         /// <summary>
         /// Forces users to add the method to generate the dictionaries
         /// </summary>
-        public abstract void GenerateDictionaries();
+        public abstract void GenerateTypeDictionaries();
 
         /// <summary>
         /// Opens connection to the datasource

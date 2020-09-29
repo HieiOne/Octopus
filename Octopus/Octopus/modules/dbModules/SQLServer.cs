@@ -15,8 +15,9 @@ namespace Octopus.modules.dbModules
     {        
         private readonly SqlConnection sqlConnection;
         private readonly SqlTransaction sqlTransaction;
-        public override Dictionary<string, Type> SQLTypeToCShartpType => throw new NotImplementedException();
-        public override Dictionary<Type, string> CShartpTypeToSQLType => throw new NotImplementedException();
+
+        public Dictionary<string, Type> SQLTypeToCShartpType = new Dictionary<string, Type>();
+        public Dictionary<Type, string> CShartpTypeToSQLType = new Dictionary<Type, string>();
 
         public SQLServer() //Initial construct of SQL Server
         {
@@ -28,6 +29,7 @@ namespace Octopus.modules.dbModules
                 throw new NotImplementedException();
             }
             sqlConnection = new SqlConnection(connectionString);
+            GenerateTypeDictionaries();
         }
 
         public override void BeginTransaction()
@@ -93,7 +95,7 @@ namespace Octopus.modules.dbModules
             throw new NotImplementedException();
         }
 
-        private void GenerateTypeDictionaries()
+        public override void GenerateTypeDictionaries()
         {
             AddToDictionaries("INTEGER", typeof(Int32));
 

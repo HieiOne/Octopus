@@ -16,9 +16,10 @@ namespace Octopus.modules.dbModules
     {
         private readonly SqliteConnection sqliteConnection;
         private SqliteDataReader dataReader;
+        public Dictionary<string, Type> test = new Dictionary<string, Type>();
 
-        public override Dictionary<string, Type> SQLTypeToCShartpType => new Dictionary<string, Type>();
-        public override Dictionary<Type, string> CShartpTypeToSQLType => new Dictionary<Type, string>();
+        public Dictionary<string, Type> SQLTypeToCShartpType = new Dictionary<string, Type>();
+        public Dictionary<Type, string> CShartpTypeToSQLType = new Dictionary<Type, string>();
 
         public SQLite() //Conexión a BD SQLite
         {
@@ -123,13 +124,35 @@ namespace Octopus.modules.dbModules
             {
                 while (dataReader.Read())
                 {
+                    string dataType = dataReader.GetString(2);
+                    string dimension = dataType.Split('(', ')')[1]; //We get value between parenthesis
+                    int lenght = -1, precision = 0;
+
+                    if (!string.IsNullOrEmpty(dimension))
+                    {
+                        dataType = dataType.Split('(', ')')[0];
+                        if (dimension.Contains(",")) //Has precision
+                        {
+                            lenght = Convert.ToInt32(dimension.Split(',')[0]);
+                            precision = Convert.ToInt32(dimension.Split(',')[1]);
+                        }
+                        else 
+                        {
+                            lenght = Convert.ToInt32(dimension);
+                        }
+                    }
+
                     DataColumn dataColumn = new DataColumn();
+
                     dataColumn.ColumnName = dataReader.GetString(1);
-                    //dataColumn.DataType = typeof(Int32);//MappingType(dataReader.GetString(2)); //We call mapping types to determine the type
+                    dataColumn.DataType = SQLTypeToCShartpType[dataType];
                     dataColumn.AllowDBNull = !dataReader.GetBoolean(3); //En SQL Lite el campo es NOT NULL entonces revertimos el valor
                     dataColumn.DefaultValue = dataReader.IsDBNull(4) ? null : dataReader.GetString(4);
                     dataColumn.Unique = dataReader.GetInt32(5) != 0 ? true : false;
                     dataColumn.ExtendedProperties.Add("SQL Type", dataReader.GetString(2));
+                    dataColumn.ExtendedProperties.Add("Precision", precision);
+                    dataColumn.MaxLength = lenght;
+
                     //TODO Column of primary keys
                     dataTable.Columns.Add(dataColumn);
                 }
@@ -183,9 +206,14 @@ namespace Octopus.modules.dbModules
         /// <summary>
         /// Replenishes the dictionaries SQLTypeToCShartpType & CShartpTypeToSQLType
         /// </summary>
-        private void GenerateTypeDictionaries()
+        public override void GenerateTypeDictionaries()
         {
+            //TODO Lenght and precision of fields
             AddToDictionaries("INTEGER", typeof(Int32));
+            AddToDictionaries("TEXT", typeof(string));
+            AddToDictionaries("REAL", typeof(decimal));
+            AddToDictionaries("BLOB", typeof(Byte[]));
+            AddToDictionaries("DATETIME", typeof(DateTime));
 
             //Local function to add to both dictionaries
             void AddToDictionaries(string sqlType, Type cSharpType)
