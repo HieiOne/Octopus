@@ -79,7 +79,7 @@ namespace Octopus.modules.dbModules
             }
         }
 
-        public override int ExecuteQuery()
+        public override int ExecuteQuery(string query)
         {
             throw new NotImplementedException();
         }

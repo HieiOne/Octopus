@@ -58,7 +58,8 @@ namespace Octopus.modules.dbModules
         /// Runs any query and returns an int with the modified registers
         /// </summary>
         /// <returns></returns>
-        public abstract int ExecuteQuery();
+        /// <param name="query"></param>
+        public abstract int ExecuteQuery(string query);
 
         /// <summary>
         /// TTSBegin in SQL

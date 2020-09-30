@@ -40,7 +40,7 @@ namespace Octopus.modules.dbModules
 
         public override void CloseReader()
         {
-            throw new NotImplementedException();
+            dataReader.Close();
         }
 
         public override void CommitTransaction()
@@ -76,9 +76,30 @@ namespace Octopus.modules.dbModules
             }
         }
 
-        public override int ExecuteQuery()
+        public override int ExecuteQuery(string query)
         {
-            throw new NotImplementedException();
+            SqlCommand sqlCommand;
+            SqlDataAdapter sqlDataAdapter = new SqlDataAdapter();
+
+            //TODO Transaction
+            sqlCommand = new SqlCommand(query, sqlConnection);
+            sqlDataAdapter.UpdateCommand = sqlCommand;
+
+            try
+            {
+                return sqlDataAdapter.UpdateCommand.ExecuteNonQuery();
+            }
+            catch (SqlException e) when (e.ErrorCode == -2146232060) //No se puede quitar la tabla {table.newName} porque no existe o el usuario no tiene permiso.
+            {
+                Messages.WriteError(e.Message);
+                return 0; //Error
+                //throw;
+            }
+            catch (Exception e)
+            {
+                Messages.WriteError(e.Message);
+                throw;
+            }
         }
 
         public override void OpenReader(string query)
@@ -89,7 +110,7 @@ namespace Octopus.modules.dbModules
             {
                 dataReader = readSQLServer.ExecuteReader();
             }
-            catch (Exception e) // when (e.ErrorCode == -2147467259)
+            catch (SqlException e) // when (e.ErrorCode == -2147467259)
             {
                 Messages.WriteError(e.Message);
                 //return 0; //Error
@@ -106,18 +127,6 @@ namespace Octopus.modules.dbModules
             throw new NotImplementedException();
         }
 
-        public override void GenerateTypeDictionaries()
-        {
-            AddToDictionaries("INTEGER", typeof(Int32));
-
-            //Local function to add to both dictionaries
-            void AddToDictionaries(string sqlType, Type cSharpType)
-            {
-                SQLTypeToCShartpType.Add(sqlType, cSharpType);
-                CShartpTypeToSQLType.Add(cSharpType, sqlType);
-            }
-        }
-
         public override void WriteTable(DataTable dataTable)
         {
             Connect(); // Connect to the DB
@@ -126,7 +135,7 @@ namespace Octopus.modules.dbModules
             CreateTable(dataTable);
             //GetRowsTable(dataTable);
 
-            CommitTransaction(); //TTSCommit, we create everything or nothing
+            //CommitTransaction(); //TTSCommit, we create everything or nothing
             Messages.WriteSuccess("Commited changes");
             Disconnect(); // Disconnects from the DB
         }
@@ -141,13 +150,20 @@ namespace Octopus.modules.dbModules
             string query = $"SELECT CASE WHEN OBJECT_ID('MAXI.dbo.{dataTable.TableName}', 'U') IS NOT NULL THEN 1 ELSE 0 END";
             OpenReader(query);
 
-            if (dataReader.HasRows)
+            if (!(dataReader.HasRows)) //If it has no rows
             {
+                CloseReader(); //Close Reader even if it has no rows
+            }
+            else
+            { 
                 bool exists = false;
-                while (dataReader.Read())
+
+                if (dataReader.Read())
                 {
                     exists = dataReader.GetInt32(0) == 0 ? false : true;
                 }
+
+                CloseReader(); //Close Reader after reading it
 
                 if (exists) // If it doesn't exist we create
                 {
@@ -156,25 +172,81 @@ namespace Octopus.modules.dbModules
                 else //Create
                 {
                     //TODO table new name (prefix and suffix)
+                    StringBuilder builder = new StringBuilder();
+
                     query = $"CREATE TABLE MAXI.dbo.{dataTable.TableName} ( "; // Inicio de Create
+                    builder.Append(query);
 
-                    List<string> columns = new List<string>();
-                    string[] primaryKeysColumns;
-
+                    int i = 1; //Start at 1 because the property Count doesn't start from 0
                     foreach (DataColumn dataColumn in dataTable.Columns)
                     {
                         string nullOrNot = dataColumn.AllowDBNull ? "NULL" : "NOT NULL";
-                        columns.Add($"{dataColumn.ColumnName} VARCHAR(MAX) {nullOrNot}");
+                        string typeName = CShartpTypeToSQLType[dataColumn.DataType];
+
+                        //TODO precision and lenght
+                        if (i == dataTable.Columns.Count) // If its last item
+                        {
+                            query = $" {dataColumn.ColumnName} {typeName} {nullOrNot}";
+                        }
+                        else // If its not last item
+                        {
+                            query = $" {dataColumn.ColumnName} {typeName} {nullOrNot},";
+                        }
+                        i++;
+                        builder.Append(query);
                     }
 
-                    query = String.Join(",", columns);
-                    Console.Write("");
+                    i = 1;
+                    foreach (DataColumn dataColumn in dataTable.PrimaryKey)
+                    {
+                        if (dataTable.PrimaryKey.Length == 1) //We add this check because the first one may be the last one aswel
+                        {
+                            query = $" PRIMARY KEY ({dataColumn.ColumnName})";
+                        }
+                        else if (i == 1) //First iteration, we do it here because a table might not have any PK
+                        {
+                            query = $" PRIMARY KEY ({dataColumn.ColumnName},";
+                        }
+                        else if (i == dataTable.PrimaryKey.Length) //Last iteration
+                        {
+                            query = $"{dataColumn.ColumnName})";
+                        }
+                        else  //Neither first nor last
+                        {
+                            query = $"{dataColumn.ColumnName},";
+                        }
 
+                        i++;
+                        builder.Append(query);
+                    }
+
+                    //Add last )
+                    builder.Append(")");
+
+                    Messages.WriteExecuteQuery("Creating table in destination. . . .");
+                    int result = ExecuteQuery(builder.ToString()); //Run CREATE query
+                    
+                    if (result == -1) //Query success, it returns -1 when is okay
+                        Messages.WriteSuccess("Table created!");
                 }
             }
-            
+        }
 
-            CloseReader();
+        public override void GenerateTypeDictionaries()
+        {
+            //TODO NVARCHAR y VARCHAR when its time
+            AddToDictionaries("INTEGER", typeof(Int32));
+            AddToDictionaries("NVARCHAR", typeof(string));
+            AddToDictionaries("DECIMAL", typeof(decimal));
+            AddToDictionaries("VARBINARY(MAX)", typeof(Byte[]));
+            AddToDictionaries("DATETIME", typeof(DateTime));
+
+            //Local function to add to both dictionaries
+            void AddToDictionaries(string sqlType, Type cSharpType)
+            {
+                SQLTypeToCShartpType.Add(sqlType, cSharpType);
+                CShartpTypeToSQLType.Add(cSharpType, sqlType);
+            }
         }
     }
 }
