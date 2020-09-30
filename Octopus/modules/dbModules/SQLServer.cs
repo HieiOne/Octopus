@@ -14,7 +14,7 @@ namespace Octopus.modules.dbModules
     class SQLServer : DataSource
     {        
         private readonly SqlConnection sqlConnection;
-        private readonly SqlTransaction sqlTransaction;
+        private SqlTransaction sqlTransaction;
         private SqlDataReader dataReader;
 
         public Dictionary<string, Type> SQLTypeToCShartpType = new Dictionary<string, Type>();
@@ -35,7 +35,7 @@ namespace Octopus.modules.dbModules
 
         public override void BeginTransaction()
         {
-            sqlConnection.BeginTransaction();
+            sqlTransaction = sqlConnection.BeginTransaction();
         }
 
         public override void CloseReader()
@@ -82,7 +82,7 @@ namespace Octopus.modules.dbModules
             SqlDataAdapter sqlDataAdapter = new SqlDataAdapter();
 
             //TODO Transaction
-            sqlCommand = new SqlCommand(query, sqlConnection);
+            sqlCommand = new SqlCommand(query, sqlConnection, sqlTransaction);
             sqlDataAdapter.UpdateCommand = sqlCommand;
 
             try
@@ -104,7 +104,7 @@ namespace Octopus.modules.dbModules
 
         public override void OpenReader(string query)
         {
-            SqlCommand readSQLServer = new SqlCommand(query, sqlConnection);
+            SqlCommand readSQLServer = new SqlCommand(query, sqlConnection, sqlTransaction);
             //TODO Doesnt get the transaction
             try
             {
@@ -130,12 +130,12 @@ namespace Octopus.modules.dbModules
         public override void WriteTable(DataTable dataTable)
         {
             Connect(); // Connect to the DB
-            //BeginTransaction(); //TTSBegin, we create everything or nothing
+            BeginTransaction(); //TTSBegin, we create everything or nothing
 
             CreateTable(dataTable);
             //GetRowsTable(dataTable);
 
-            //CommitTransaction(); //TTSCommit, we create everything or nothing
+            CommitTransaction(); //TTSCommit, we create everything or nothing
             Messages.WriteSuccess("Commited changes");
             Disconnect(); // Disconnects from the DB
         }
