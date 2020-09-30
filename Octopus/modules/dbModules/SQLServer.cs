@@ -81,7 +81,6 @@ namespace Octopus.modules.dbModules
             SqlCommand sqlCommand;
             SqlDataAdapter sqlDataAdapter = new SqlDataAdapter();
 
-            //TODO Transaction
             sqlCommand = new SqlCommand(query, sqlConnection, sqlTransaction);
             sqlDataAdapter.UpdateCommand = sqlCommand;
 
@@ -105,7 +104,7 @@ namespace Octopus.modules.dbModules
         public override void OpenReader(string query)
         {
             SqlCommand readSQLServer = new SqlCommand(query, sqlConnection, sqlTransaction);
-            //TODO Doesnt get the transaction
+
             try
             {
                 dataReader = readSQLServer.ExecuteReader();
@@ -234,9 +233,8 @@ namespace Octopus.modules.dbModules
 
         public override void GenerateTypeDictionaries()
         {
-            //TODO NVARCHAR y VARCHAR when its time
             AddToDictionaries("INTEGER", typeof(Int32));
-            AddToDictionaries("NVARCHAR", typeof(string));
+            AddToDictionaries("NVARCHAR", typeof(string)); // We dont use varchar so we can support Unicode strings
             AddToDictionaries("DECIMAL", typeof(decimal));
             AddToDictionaries("VARBINARY(MAX)", typeof(Byte[]));
             AddToDictionaries("DATETIME", typeof(DateTime));
