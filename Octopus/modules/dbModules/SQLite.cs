@@ -23,7 +23,6 @@ namespace Octopus.modules.dbModules
 
         public SQLite() //Construct, creates the connection string and generates types from SQL to C#
         {
-            //TODO Check the configuration exists previously and show error
             string connectionString = ConfigurationManager.ConnectionStrings["SQLiteConnectionString"].ConnectionString;
 
             if (string.IsNullOrEmpty(connectionString))
