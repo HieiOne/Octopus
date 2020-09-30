@@ -95,6 +95,7 @@ namespace Octopus
                     //TODO check for SQL Injection
                     Console.WriteLine(dataTable.TableName);
                     fromDataSource.ReadTable(dataTable);
+                    toDataSource.WriteTable(dataTable);
                 }
             }
             Console.WriteLine("DONE");

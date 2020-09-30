@@ -245,5 +245,9 @@ namespace Octopus.modules.dbModules
             }
         }
 
+        public override void WriteTable(DataTable dataTable)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

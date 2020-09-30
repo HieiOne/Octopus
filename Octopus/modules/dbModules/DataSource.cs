@@ -74,6 +74,15 @@ namespace Octopus.modules.dbModules
         /// Reads the table name and adds all columns and registers into the DataTable object
         /// This class must call other methods to create the Schema (Columns + Keys) of the table and add the datarows
         /// </summary>
+        /// <param name="dataTable"></param>
         public abstract void ReadTable(DataTable dataTable);
+
+        /// <summary>
+        /// Creates the table (if it doesnt exist) and adds all of the rows in the DataTable set
+        /// This class must call other methods to create the table in destiny and then bulk copy the rows
+        /// </summary>
+        /// <param name="dataTable"></param>
+        public abstract void WriteTable(DataTable dataTable);
+
     }
 }

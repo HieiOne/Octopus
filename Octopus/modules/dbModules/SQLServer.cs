@@ -106,5 +106,15 @@ namespace Octopus.modules.dbModules
                 CShartpTypeToSQLType.Add(cSharpType, sqlType);
             }
         }
+
+        public override void WriteTable(DataTable dataTable)
+        {
+            Connect(); // Connect to the DB
+
+            //GetSchemaTable(dataTable);
+            //GetRowsTable(dataTable);
+
+            Disconnect(); // Disconnects from the DB
+        }
     }
 }
