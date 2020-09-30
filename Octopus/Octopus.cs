@@ -22,13 +22,15 @@ namespace Octopus
             List<string> tableList;
 
             string prefix = ConfigurationManager.AppSettings.Get("prefix") + "_";
-            string suffix = "_" + ConfigurationManager.AppSettings.Get("suffix");
+            //string suffix = "_" + ConfigurationManager.AppSettings.Get("suffix");
             
             if (prefix.Length == 1) // Without value
                 prefix = null;
 
-            if (suffix.Length == 1) // Without value
-                suffix = null;
+            /*
+             * if (suffix.Length == 1) // Without value
+             *   suffix = null;
+             */
 
             Debug.WriteLine("Reading Config file . . .");
             tableList = ConfigurationTableList();
@@ -41,6 +43,7 @@ namespace Octopus
                 {
                     DataTable dataTable = new DataTable();
                     dataTable.TableName = table;
+                    dataTable.Prefix = prefix;
                     dataTableList.Add(dataTable);
                 }
 
@@ -96,6 +99,8 @@ namespace Octopus
                     Console.WriteLine(dataTable.TableName);
                     fromDataSource.ReadTable(dataTable);
                     toDataSource.WriteTable(dataTable);
+                    Console.WriteLine("==================================================="); //Little separator
+
                 }
             }
             Console.WriteLine("DONE");

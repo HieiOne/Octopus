@@ -131,8 +131,8 @@ namespace Octopus.modules.dbModules
             Connect(); // Connect to the DB
             BeginTransaction(); //TTSBegin, we create everything or nothing
 
-            CreateTable(dataTable);
-            //GetRowsTable(dataTable);
+            CreateTable(dataTable); //TODO Check if table has changes and update
+            InsertRows(dataTable);
 
             CommitTransaction(); //TTSCommit, we create everything or nothing
             Messages.WriteSuccess("Commited changes");
@@ -146,7 +146,7 @@ namespace Octopus.modules.dbModules
         private void CreateTable(DataTable dataTable)
         {
             //Add config for db and schema
-            string query = $"SELECT CASE WHEN OBJECT_ID('MAXI.dbo.{dataTable.TableName}', 'U') IS NOT NULL THEN 1 ELSE 0 END";
+            string query = $"SELECT CASE WHEN OBJECT_ID('MAXI.dbo.{dataTable.Prefix}{dataTable.TableName}', 'U') IS NOT NULL THEN 1 ELSE 0 END";
             OpenReader(query);
 
             if (!(dataReader.HasRows)) //If it has no rows
@@ -166,14 +166,13 @@ namespace Octopus.modules.dbModules
 
                 if (exists) // If it doesn't exist we create
                 {
-                    Messages.WriteQuestion($"Table {dataTable.TableName} already exists");
+                    Messages.WriteQuestion($"Table {dataTable.Prefix}{dataTable.TableName} already exists");
                 }
                 else //Create
                 {
-                    //TODO table new name (prefix and suffix)
                     StringBuilder builder = new StringBuilder();
 
-                    query = $"CREATE TABLE MAXI.dbo.{dataTable.TableName} ( "; // Inicio de Create
+                    query = $"CREATE TABLE MAXI.dbo.{dataTable.Prefix}{dataTable.TableName} ( "; // Inicio de Create
                     builder.Append(query);
 
                     int i = 1; //Start at 1 because the property Count doesn't start from 0
@@ -182,14 +181,28 @@ namespace Octopus.modules.dbModules
                         string nullOrNot = dataColumn.AllowDBNull ? "NULL" : "NOT NULL";
                         string typeName = CShartpTypeToSQLType[dataColumn.DataType];
 
-                        //TODO precision and lenght
+                        //This string will be used to define lenght and precision e.g (17,2)
+                        string lenghtAndPrecision = null; //As starters empty
+
+                        if (dataColumn.ExtendedProperties["Lenght"].ToString() != "-1" && typeName != "INTEGER")
+                        {
+                            if (dataColumn.ExtendedProperties["Precision"].ToString() != "0")
+                            {
+                                lenghtAndPrecision = $"({dataColumn.ExtendedProperties["Lenght"].ToString()},{dataColumn.ExtendedProperties["Precision"].ToString()})";
+                            }
+                            else
+                            {
+                                lenghtAndPrecision = $"({dataColumn.ExtendedProperties["Lenght"].ToString()})";
+                            }
+                        }
+
                         if (i == dataTable.Columns.Count) // If its last item
                         {
-                            query = $" {dataColumn.ColumnName} {typeName} {nullOrNot}";
+                            query = $" {dataColumn.ColumnName} {typeName} {lenghtAndPrecision} {nullOrNot}";
                         }
                         else // If its not last item
                         {
-                            query = $" {dataColumn.ColumnName} {typeName} {nullOrNot},";
+                            query = $" {dataColumn.ColumnName} {typeName} {lenghtAndPrecision} {nullOrNot},";
                         }
                         i++;
                         builder.Append(query);
@@ -227,6 +240,25 @@ namespace Octopus.modules.dbModules
                     
                     if (result == -1) //Query success, it returns -1 when is okay
                         Messages.WriteSuccess("Table created!");
+                }
+            }
+        }
+
+        private void InsertRows(DataTable dataTable)
+        {
+            using (SqlBulkCopy bulkCopy = new SqlBulkCopy(sqlConnection,SqlBulkCopyOptions.Default,sqlTransaction))
+            {
+                //TODO add DB and Schema
+                bulkCopy.DestinationTableName = $"MAXI.dbo.{dataTable.Prefix}{dataTable.TableName}";
+
+                try
+                {
+                    // Write from the source to the destination.
+                    bulkCopy.WriteToServer(dataTable);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e.Message);
                 }
             }
         }
