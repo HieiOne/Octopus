@@ -5,13 +5,15 @@
       "name":  "SQLServer",
       "fromDB": "false",
       "toDB": "true",
-      "className": "SQLServer"
+      "className": "SQLServer",
+      "connectionString": "SQLServerConnectionString"
     },
     {
       "name": "SQLite",
       "fromDB": "true",
       "toDB": "false",
-      "className": "SQLite"
+      "className": "SQLite",
+      "connectionString": "SQLiteConnectionString"
     }
   ]
   

@@ -124,6 +124,7 @@ namespace Octopus
             public bool fromDB { get; set; }
             public bool toDB { get; set; }
             public string className { get; set; }
+            public string connectionString { get; set; }
         }
 
         /// <summary>
@@ -153,6 +154,24 @@ namespace Octopus
                         throw new NotImplementedException();
                     }
 
+                    #region CheckConnectionString
+                    //Check to control that the connection string is replenished if not throw error
+                    try
+                    {
+                        string connectionString = ConfigurationManager.ConnectionStrings[dbDefinition.connectionString].ConnectionString;
+                        if (string.IsNullOrEmpty(connectionString))
+                        {
+                            Messages.WriteError($"{fromDB} connection string {dbDefinition.connectionString} is not set or is empty");
+                            throw new NotImplementedException();
+                        }
+                    }
+                    catch (Exception)
+                    {
+                        Messages.WriteError($"{fromDB} connection string {dbDefinition.connectionString} is not set or is empty");
+                        throw;
+                    }
+                    #endregion
+
                     string objectToInstantiate = $"Octopus.modules.dbModules.{dbDefinition.className}, Octopus";
                     var objectType = Type.GetType(objectToInstantiate);
 
@@ -167,6 +186,24 @@ namespace Octopus
                         Messages.WriteError($"{toDB} is not implemented yet as destiny BD");
                         throw new NotImplementedException();
                     }
+
+                    #region CheckConnectionString
+                    //Check to control that the connection string is replenished if not throw error
+                    try
+                    {
+                        string connectionString = ConfigurationManager.ConnectionStrings[dbDefinition.connectionString].ConnectionString;
+                        if (string.IsNullOrEmpty(connectionString))
+                        {
+                            Messages.WriteError($"{toDB} connection string {dbDefinition.connectionString} is not set or is empty");
+                            throw new NotImplementedException();
+                        }
+                    }
+                    catch (Exception)
+                    {
+                        Messages.WriteError($"{toDB} connection string {dbDefinition.connectionString} is not set or is empty");
+                        throw;
+                    }
+                    #endregion
 
                     string objectToInstantiate = $"Octopus.modules.dbModules.{dbDefinition.className}, Octopus";
                     var objectType = Type.GetType(objectToInstantiate);
