@@ -23,6 +23,7 @@ namespace Octopus.modules.dbModules
 
         public SQLite() //Construct, creates the connection string and generates types from SQL to C#
         {
+            //TODO Check the configuration exists previously and show error
             string connectionString = ConfigurationManager.ConnectionStrings["SQLiteConnectionString"].ConnectionString;
 
             if (string.IsNullOrEmpty(connectionString))
@@ -112,6 +113,7 @@ namespace Octopus.modules.dbModules
             Connect(); // Connect to the DB
 
             GetSchemaTable(dataTable);
+            GetRowsTable(dataTable);
 
             Disconnect(); // Disconnects from the DB
         }
@@ -161,7 +163,7 @@ namespace Octopus.modules.dbModules
                     dataColumn.DataType = SQLTypeToCShartpType[dataType];
                     dataColumn.AllowDBNull = !dataReader.GetBoolean(3); //En SQL Lite el campo es NOT NULL entonces revertimos el valor
                     dataColumn.DefaultValue = dataReader.IsDBNull(4) ? null : dataReader.GetString(4);
-                    dataColumn.Unique = dataReader.GetInt32(5) != 0 ? true : false;
+                    //dataColumn.Unique = dataReader.GetInt32(5) != 0 ? true : false;
                     dataColumn.ExtendedProperties.Add("SQL_Type", dataReader.GetString(2));
                     dataColumn.ExtendedProperties.Add("Precision", precision);
                     dataColumn.ExtendedProperties.Add("Lenght", lenght);
@@ -172,12 +174,48 @@ namespace Octopus.modules.dbModules
 
                 //Add primary key columns to dataTable
                 DataColumn[] dataColumns = dataTable.Columns.Cast<DataColumn>()
-                                                            .Where(x => x.Unique is true)
+                                                            .Where(x => x.ExtendedProperties["Primary_Key_Order"].ToString() != "0") //TODO Find a better way to do this
                                                             .OrderBy(z => z.ExtendedProperties["Primary_Key_Order"]) //Order by pk id
                                                             .ToArray();
                 dataTable.PrimaryKey = dataColumns;
 
                 Messages.WriteSuccess($"Generated the schema of the table {dataTable.TableName} succesfully");
+            }
+            else
+            {
+                Messages.WriteError($"The table {dataTable.TableName} has no columns or wasn't found");
+                throw new NotImplementedException();
+            }
+
+            CloseReader();
+        }
+
+        /// <summary>
+        /// Adds all rows of the table to the datatable
+        /// </summary>
+        /// <param name="dataTable"></param>
+        private void GetRowsTable(DataTable dataTable)
+        {
+            string query = $"SELECT * FROM '{dataTable.TableName}'";
+            OpenReader(query);
+            
+            if (dataReader.HasRows)
+            {
+                while (dataReader.Read())
+                {
+                    DataRow dataRow = dataTable.NewRow();
+
+                    for (int i = 0; i < dataTable.Columns.Count; i++)
+                    {
+                        DataColumn dataColumn = dataTable.Columns[i]; // I rather have it in a different variable and ref it later
+
+                        if (!(dataReader.GetValue(i) is DBNull))
+                            dataRow[dataColumn] = Convert.ChangeType(dataReader.GetValue(i),dataColumn.DataType);
+                    }
+
+                    dataTable.Rows.Add(dataRow);
+                }
+                Messages.WriteSuccess($"Added all the rows of the table {dataTable.TableName} succesfully");
             }
             else
             {

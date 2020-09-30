@@ -97,6 +97,7 @@ namespace Octopus
                     fromDataSource.ReadTable(dataTable);
                 }
             }
+            Console.WriteLine("DONE");
         }
 
         /// <summary>
