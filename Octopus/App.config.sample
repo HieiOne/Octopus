@@ -13,8 +13,8 @@
     <add key="fromDB" value="SQLite"/>
     <add key="toDB" value="SQLServer"/>
 
-    <add key="prefix" value=""/>
-    <add key="suffix" value="DATADEC"/>
+    <!--<add key="suffix" value=""/>-->
+    <add key="prefix" value="DATADEC"/>
   </appSettings>
 
   <TableList>
