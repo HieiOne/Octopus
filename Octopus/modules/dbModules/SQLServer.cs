@@ -131,6 +131,7 @@ namespace Octopus.modules.dbModules
             Connect(); // Connect to the DB
             BeginTransaction(); //TTSBegin, we create everything or nothing
 
+            DropTable($"{dataTable.Prefix}{dataTable.TableName}"); //TODO We drop table because we don't know how to upsert registers
             CreateTable(dataTable); //TODO Check if table has changes and update
             InsertRows(dataTable);
 
@@ -140,107 +141,137 @@ namespace Octopus.modules.dbModules
         }
 
         /// <summary>
+        /// Checks if table exists and returns bool
+        /// </summary>
+        /// <param name="tableName"></param>
+        /// <returns></returns>
+        private bool TableExists(string tableName)
+        {
+            //TODO Add config for db and schema
+            bool exists = false;
+            string query = $"SELECT CASE WHEN OBJECT_ID('MAXI.dbo.{tableName}', 'U') IS NOT NULL THEN 1 ELSE 0 END";
+            
+            OpenReader(query);
+
+            if (!(dataReader.HasRows)) //If it has no rows
+            {
+                exists =  false;
+            }
+            else
+            {
+                if (dataReader.Read())
+                {
+                    exists = dataReader.GetInt32(0) == 0 ? false : true;
+                }
+            }
+
+            CloseReader();
+            return exists;
+        }
+
+        /// <summary>
+        /// Drops table passed by parameter
+        /// </summary>
+        /// <param name="tableName"></param>
+        private void DropTable(string tableName)
+        {
+            string query = $"DROP TABLE MAXI.dbo.{tableName}";
+
+            if (TableExists(tableName))
+            {
+                ExecuteQuery(query);
+                Messages.WriteSuccess($"Table {tableName} removed succesfully");
+            }
+            else
+            {
+                Messages.WriteError($"Table {tableName} couldn't be removed either because of permissions or because the table doesn't exist");
+            }
+        }
+
+        /// <summary>
         /// Creates a table (in case it doesn't already exist) from a dataTable object
         /// </summary>
         /// <param name="dataTable"></param>
         private void CreateTable(DataTable dataTable)
         {
-            //Add config for db and schema
-            string query = $"SELECT CASE WHEN OBJECT_ID('MAXI.dbo.{dataTable.Prefix}{dataTable.TableName}', 'U') IS NOT NULL THEN 1 ELSE 0 END";
-            OpenReader(query);
+            string query;
 
-            if (!(dataReader.HasRows)) //If it has no rows
+            if (TableExists($"{dataTable.Prefix}{ dataTable.TableName}")) // If it doesn't exist we create
             {
-                CloseReader(); //Close Reader even if it has no rows
+                Messages.WriteQuestion($"Table {dataTable.Prefix}{dataTable.TableName} already exists");
             }
-            else
-            { 
-                bool exists = false;
+            else //Create
+            {
+                StringBuilder builder = new StringBuilder();
 
-                if (dataReader.Read())
+                query = $"CREATE TABLE MAXI.dbo.{dataTable.Prefix}{dataTable.TableName} ( "; // Inicio de Create
+                builder.Append(query);
+
+                int i = 1; //Start at 1 because the property Count doesn't start from 0
+                foreach (DataColumn dataColumn in dataTable.Columns)
                 {
-                    exists = dataReader.GetInt32(0) == 0 ? false : true;
-                }
+                    string nullOrNot = dataColumn.AllowDBNull ? "NULL" : "NOT NULL";
+                    string typeName = CShartpTypeToSQLType[dataColumn.DataType];
 
-                CloseReader(); //Close Reader after reading it
+                    //This string will be used to define lenght and precision e.g (17,2)
+                    string lenghtAndPrecision = null; //As starters empty
 
-                if (exists) // If it doesn't exist we create
-                {
-                    Messages.WriteQuestion($"Table {dataTable.Prefix}{dataTable.TableName} already exists");
-                }
-                else //Create
-                {
-                    StringBuilder builder = new StringBuilder();
+                    if (dataColumn.ExtendedProperties["Lenght"].ToString() != "-1" && typeName != "INTEGER")
+                    {
+                        if (dataColumn.ExtendedProperties["Precision"].ToString() != "0")
+                        {
+                            lenghtAndPrecision = $"({dataColumn.ExtendedProperties["Lenght"].ToString()},{dataColumn.ExtendedProperties["Precision"].ToString()})";
+                        }
+                        else
+                        {
+                            lenghtAndPrecision = $"({dataColumn.ExtendedProperties["Lenght"].ToString()})";
+                        }
+                    }
 
-                    query = $"CREATE TABLE MAXI.dbo.{dataTable.Prefix}{dataTable.TableName} ( "; // Inicio de Create
+                    if (i == dataTable.Columns.Count) // If its last item
+                    {
+                        query = $" {dataColumn.ColumnName} {typeName} {lenghtAndPrecision} {nullOrNot}";
+                    }
+                    else // If its not last item
+                    {
+                        query = $" {dataColumn.ColumnName} {typeName} {lenghtAndPrecision} {nullOrNot},";
+                    }
+                    i++;
                     builder.Append(query);
-
-                    int i = 1; //Start at 1 because the property Count doesn't start from 0
-                    foreach (DataColumn dataColumn in dataTable.Columns)
-                    {
-                        string nullOrNot = dataColumn.AllowDBNull ? "NULL" : "NOT NULL";
-                        string typeName = CShartpTypeToSQLType[dataColumn.DataType];
-
-                        //This string will be used to define lenght and precision e.g (17,2)
-                        string lenghtAndPrecision = null; //As starters empty
-
-                        if (dataColumn.ExtendedProperties["Lenght"].ToString() != "-1" && typeName != "INTEGER")
-                        {
-                            if (dataColumn.ExtendedProperties["Precision"].ToString() != "0")
-                            {
-                                lenghtAndPrecision = $"({dataColumn.ExtendedProperties["Lenght"].ToString()},{dataColumn.ExtendedProperties["Precision"].ToString()})";
-                            }
-                            else
-                            {
-                                lenghtAndPrecision = $"({dataColumn.ExtendedProperties["Lenght"].ToString()})";
-                            }
-                        }
-
-                        if (i == dataTable.Columns.Count) // If its last item
-                        {
-                            query = $" {dataColumn.ColumnName} {typeName} {lenghtAndPrecision} {nullOrNot}";
-                        }
-                        else // If its not last item
-                        {
-                            query = $" {dataColumn.ColumnName} {typeName} {lenghtAndPrecision} {nullOrNot},";
-                        }
-                        i++;
-                        builder.Append(query);
-                    }
-
-                    i = 1;
-                    foreach (DataColumn dataColumn in dataTable.PrimaryKey)
-                    {
-                        if (dataTable.PrimaryKey.Length == 1) //We add this check because the first one may be the last one aswel
-                        {
-                            query = $" PRIMARY KEY ({dataColumn.ColumnName})";
-                        }
-                        else if (i == 1) //First iteration, we do it here because a table might not have any PK
-                        {
-                            query = $" PRIMARY KEY ({dataColumn.ColumnName},";
-                        }
-                        else if (i == dataTable.PrimaryKey.Length) //Last iteration
-                        {
-                            query = $"{dataColumn.ColumnName})";
-                        }
-                        else  //Neither first nor last
-                        {
-                            query = $"{dataColumn.ColumnName},";
-                        }
-
-                        i++;
-                        builder.Append(query);
-                    }
-
-                    //Add last )
-                    builder.Append(")");
-
-                    Messages.WriteExecuteQuery("Creating table in destination. . . .");
-                    int result = ExecuteQuery(builder.ToString()); //Run CREATE query
-                    
-                    if (result == -1) //Query success, it returns -1 when is okay
-                        Messages.WriteSuccess("Table created!");
                 }
+
+                i = 1;
+                foreach (DataColumn dataColumn in dataTable.PrimaryKey)
+                {
+                    if (dataTable.PrimaryKey.Length == 1) //We add this check because the first one may be the last one aswel
+                    {
+                        query = $" PRIMARY KEY ({dataColumn.ColumnName})";
+                    }
+                    else if (i == 1) //First iteration, we do it here because a table might not have any PK
+                    {
+                        query = $" PRIMARY KEY ({dataColumn.ColumnName},";
+                    }
+                    else if (i == dataTable.PrimaryKey.Length) //Last iteration
+                    {
+                        query = $"{dataColumn.ColumnName})";
+                    }
+                    else  //Neither first nor last
+                    {
+                        query = $"{dataColumn.ColumnName},";
+                    }
+
+                    i++;
+                    builder.Append(query);
+                }
+
+                //Add last )
+                builder.Append(")");
+
+                Messages.WriteExecuteQuery("Creating table in destination. . . .");
+                int result = ExecuteQuery(builder.ToString()); //Run CREATE query
+                    
+                if (result == -1) //Query success, it returns -1 when is okay
+                    Messages.WriteSuccess("Table created!");
             }
         }
 
