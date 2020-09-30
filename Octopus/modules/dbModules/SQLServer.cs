@@ -15,6 +15,7 @@ namespace Octopus.modules.dbModules
     {        
         private readonly SqlConnection sqlConnection;
         private readonly SqlTransaction sqlTransaction;
+        private SqlDataReader dataReader;
 
         public Dictionary<string, Type> SQLTypeToCShartpType = new Dictionary<string, Type>();
         public Dictionary<Type, string> CShartpTypeToSQLType = new Dictionary<Type, string>();
@@ -34,7 +35,7 @@ namespace Octopus.modules.dbModules
 
         public override void BeginTransaction()
         {
-            throw new NotImplementedException();
+            sqlConnection.BeginTransaction();
         }
 
         public override void CloseReader()
@@ -44,7 +45,7 @@ namespace Octopus.modules.dbModules
 
         public override void CommitTransaction()
         {
-            throw new NotImplementedException();
+            sqlTransaction.Commit();
         }
 
         public override void Connect()
@@ -82,7 +83,17 @@ namespace Octopus.modules.dbModules
 
         public override void OpenReader(string query)
         {
-            throw new NotImplementedException();
+            SqlCommand readSQLServer = new SqlCommand(query, sqlConnection);
+            //TODO Doesnt get the transaction
+            try
+            {
+                dataReader = readSQLServer.ExecuteReader();
+            }
+            catch (Exception e) // when (e.ErrorCode == -2147467259)
+            {
+                Messages.WriteError(e.Message);
+                //return 0; //Error
+            }
         }
 
         public override void OpenReader(string query, int limit)
@@ -110,11 +121,60 @@ namespace Octopus.modules.dbModules
         public override void WriteTable(DataTable dataTable)
         {
             Connect(); // Connect to the DB
+            //BeginTransaction(); //TTSBegin, we create everything or nothing
 
-            //GetSchemaTable(dataTable);
+            CreateTable(dataTable);
             //GetRowsTable(dataTable);
 
+            CommitTransaction(); //TTSCommit, we create everything or nothing
+            Messages.WriteSuccess("Commited changes");
             Disconnect(); // Disconnects from the DB
+        }
+
+        /// <summary>
+        /// Creates a table (in case it doesn't already exist) from a dataTable object
+        /// </summary>
+        /// <param name="dataTable"></param>
+        private void CreateTable(DataTable dataTable)
+        {
+            //Add config for db and schema
+            string query = $"SELECT CASE WHEN OBJECT_ID('MAXI.dbo.{dataTable.TableName}', 'U') IS NOT NULL THEN 1 ELSE 0 END";
+            OpenReader(query);
+
+            if (dataReader.HasRows)
+            {
+                bool exists = false;
+                while (dataReader.Read())
+                {
+                    exists = dataReader.GetInt32(0) == 0 ? false : true;
+                }
+
+                if (exists) // If it doesn't exist we create
+                {
+                    Messages.WriteQuestion($"Table {dataTable.TableName} already exists");
+                }
+                else //Create
+                {
+                    //TODO table new name (prefix and suffix)
+                    query = $"CREATE TABLE MAXI.dbo.{dataTable.TableName} ( "; // Inicio de Create
+
+                    List<string> columns = new List<string>();
+                    string[] primaryKeysColumns;
+
+                    foreach (DataColumn dataColumn in dataTable.Columns)
+                    {
+                        string nullOrNot = dataColumn.AllowDBNull ? "NULL" : "NOT NULL";
+                        columns.Add($"{dataColumn.ColumnName} VARCHAR(MAX) {nullOrNot}");
+                    }
+
+                    query = String.Join(",", columns);
+                    Console.Write("");
+
+                }
+            }
+            
+
+            CloseReader();
         }
     }
 }

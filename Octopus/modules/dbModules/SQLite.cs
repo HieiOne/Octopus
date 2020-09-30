@@ -215,7 +215,7 @@ namespace Octopus.modules.dbModules
 
                     dataTable.Rows.Add(dataRow);
                 }
-                Messages.WriteSuccess($"Added all the rows of the table {dataTable.TableName} succesfully");
+                Messages.WriteSuccess($"Added all the rows of the table to a dataTable object {dataTable.TableName} succesfully");
             }
             else
             {
