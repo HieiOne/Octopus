@@ -68,6 +68,8 @@ namespace Octopus
             public string Name { get; set; }
             public string FromDatabase { get; set; }
             public string FromServer { get; set; }
+            public string ToServer { get; set; }
+
         }
 
         /// <summary>
@@ -85,7 +87,8 @@ namespace Octopus
                 TableElement tableElement = new TableElement();
                 tableElement.Name = instance.Name;
                 tableElement.FromDatabase = instance.Database;
-                tableElement.FromServer = instance.Server;
+                tableElement.FromServer = instance.FromServer;
+                tableElement.ToServer = instance.ToServer;
                 tableList.Add(tableElement);
             }
 
