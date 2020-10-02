@@ -23,7 +23,7 @@
   <!-- name (REQUIRED) -> tableName ||| fromServer (OPT) -> serverName where from where it will be read (has to match db definitions) ||| toServer (OPT) -> serverName where from where it will be stored (has to match db definitions) ||| fromdatabase (OPT) -> db name from where it will be read-->
   <TableListConfig>
     <tables>
-      <add name="EXMOB_VENTA_CAB"></add>
+      <add name="EXMOB_VENTA_CAB"/>
       <add name="EXMOB_VENTA_DET"/>
       <add name="EXMOB_ESTADO_TRANSMISION"/>
       <add name="EPALI_CLIENTE_SUCURSAL"/>

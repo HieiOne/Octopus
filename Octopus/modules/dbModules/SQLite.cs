@@ -173,7 +173,7 @@ namespace Octopus.modules.dbModules
 
                 //Add primary key columns to dataTable
                 DataColumn[] dataColumns = dataTable.Columns.Cast<DataColumn>()
-                                                            .Where(x => x.ExtendedProperties["Primary_Key_Order"].ToString() != "0") //TODO Find a better way to do this
+                                                            .Where(x => x.ExtendedProperties["Primary_Key_Order"].ToString() != "0")
                                                             .OrderBy(z => z.ExtendedProperties["Primary_Key_Order"]) //Order by pk id
                                                             .ToArray();
                 dataTable.PrimaryKey = dataColumns;

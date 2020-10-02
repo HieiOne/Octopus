@@ -1,4 +1,4 @@
-﻿using Octopus.modules.messages;
+using Octopus.modules.messages;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -132,8 +132,8 @@ namespace Octopus.modules.dbModules
             Connect(); // Connect to the DB
             BeginTransaction(); //TTSBegin, we create everything or nothing
 
-            DropTable($"{dataTable.Prefix}{dataTable.TableName}"); //TODO We drop table because we don't know how to upsert registers
-            CreateTable(dataTable); //TODO Check if table has changes and update
+            DropTable($"{dataTable.Prefix}{dataTable.TableName}");
+            CreateTable(dataTable); //TODO Check if table has changes and update instead of dropping and creating
             InsertRows(dataTable);
 
             CommitTransaction(); //TTSCommit, we create everything or nothing
