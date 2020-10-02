@@ -1,5 +1,5 @@
 # **OCTOPUS**
-This project is still not in v1, meaning the core isn't fully ready for any use yet. It will be ready soon though
+This project is still not in v1, meaning the core isn't fully ready for any use yet. It will be ready soon though (Very soon, few adaptations so modules will have a standard)
 
  ==================
  
@@ -37,14 +37,17 @@ This project is structured to allow new modules to come into action, so in case 
 
 1. First of all is to add the new origin/destiny to the DbDefinitions.json
 	1. name -> origin name
-	2. fromDB -> treated as bool, true means you implemented the destiny mode (write)
-	3. toDB -> treated as bool, true means you implemented the origin mode (read)
+	2. fromServer -> treated as bool, true means you implemented the destiny mode (write)
+	3. toServer -> treated as bool, true means you implemented the origin mode (read)
 	4. className -> the name of the module, this one is important, It has to match with the actual method you create or else it won't be able to create the instance
+	5. connectionString -> defines which connectionstring from the App.Config file the definition will use
 
 2. The class has to inherit from the abstract class DataSource (which defines what methods are required, or else it won't work!)
-	1. From here you can do stuff as you wish as long as you return a fully matured DataTable with DataColumns (with DataType as C# types, for that use the dictionary properties) and DataRows
+	1. From here you can do stuff as you wish as long as you return a fully matured DataTable with DataColumns (with DataType as C# types, for that use the dictionary properties) and DataRows.
+	2. Is important the construct takes the parameter connectionString to use it while creating the instance (Check out SQL Server module as reference).
+	3. It is also important to generate the dictionary relating C# Types to the Db server types (Check out SQL Server module as reference).
 
-3. (Optional) Don't forget to modify the keys fromDB or toDB in App.config if you wish to use the new module you created (as value use the name)
+3. (Optional) Don't forget to modify the keys fromServer or toServer in App.config if you wish to use the new module you created (as value use the name)
 
 ###### Octopus out
 
