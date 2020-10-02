@@ -120,7 +120,7 @@ namespace Octopus
                 {
                     //TODO check for SQL Injection
                     Console.WriteLine(dataTable.TableName);
-                    FromDataSources[Convert.ToInt32(dataTable.ExtendedProperties["FromServerIndex"].ToString())].ReadTable(dataTable); // TODO look for a better way - The idea is that we get the index where the datasource was stored in the list and then we call it
+                    FromDataSources[Convert.ToInt32(dataTable.ExtendedProperties["FromServerIndex"].ToString())].ReadTable(dataTable);
                     ToDataSources[Convert.ToInt32(dataTable.ExtendedProperties["ToServerIndex"].ToString())].WriteTable(dataTable);
                     Console.WriteLine("==================================================="); //Little separator
 
@@ -164,8 +164,7 @@ namespace Octopus
             List<DataSource> toDataSource = new List<DataSource>();
 
             //Create array with the values so we can use it later to filter the dbDefinitionList
-            //string[] bdConfig = new string[] { fromServer, toServer };
-            //TODO add all this crap to documentation
+
             //Generate from Server
             #region GenerateFromServer
             foreach (DbDefinition dbDefinition in dbList.dbDefinitions

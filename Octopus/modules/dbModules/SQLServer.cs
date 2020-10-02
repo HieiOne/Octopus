@@ -23,7 +23,6 @@ namespace Octopus.modules.dbModules
         public SQLServer(string sqlConnectionString) //Initial construct of SQL Server
         {
             string connectionString = ConfigurationManager.ConnectionStrings[sqlConnectionString].ConnectionString;
-            //TODO add this to documentation to create new modules
 
             if (string.IsNullOrEmpty(connectionString)) 
             {

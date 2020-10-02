@@ -16,7 +16,6 @@ namespace Octopus.modules.dbModules
     {
         private readonly SqliteConnection sqliteConnection;
         private SqliteDataReader dataReader;
-        public Dictionary<string, Type> test = new Dictionary<string, Type>();
 
         public Dictionary<string, Type> SQLTypeToCShartpType = new Dictionary<string, Type>();
         public Dictionary<Type, string> CShartpTypeToSQLType = new Dictionary<Type, string>();
