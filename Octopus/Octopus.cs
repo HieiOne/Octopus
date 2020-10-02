@@ -11,6 +11,7 @@ using System.Data;
 using Newtonsoft.Json;
 using System.IO;
 using Octopus.modules.dbModules;
+using Octopus.modules.ConfigurationSettings;
 
 namespace Octopus
 {
@@ -19,7 +20,7 @@ namespace Octopus
         static void Main(string[] args)
         {
             List<DataTable> dataTableList = new List<DataTable>();
-            List<string> tableList;
+            List<TableElement> tableList;
 
             string prefix = ConfigurationManager.AppSettings.Get("prefix") + "_";
             //string suffix = "_" + ConfigurationManager.AppSettings.Get("suffix");
@@ -39,10 +40,12 @@ namespace Octopus
             {
                 Debug.WriteLine("Read Config file succesfully");
 
-                foreach (string table in tableList) //Convert the list of strings to Data Tables
+                foreach (TableElement table in tableList) //Convert the list of strings to Data Tables
                 {
                     DataTable dataTable = new DataTable();
-                    dataTable.TableName = table;
+                    dataTable.TableName = table.Name;
+                    dataTable.ExtendedProperties.Add("FromServer", table.FromServer);
+                    dataTable.ExtendedProperties.Add("FromDatabase", table.FromDatabase);
                     dataTable.Prefix = prefix;
                     dataTableList.Add(dataTable);
                 }
@@ -57,20 +60,32 @@ namespace Octopus
         }
 
         /// <summary>
+        /// Class we use for the configuration table list
+        /// </summary>
+        class TableElement
+        { 
+            public string Name { get; set; }
+            public string FromDatabase { get; set; }
+            public string FromServer { get; set; }
+        }
+
+        /// <summary>
         /// Reads from configuration list the section TableList, converts it to a List<string> and returns it
         /// </summary>
         /// <returns>List<string></returns>
-        static List<string> ConfigurationTableList()
+        static List<TableElement> ConfigurationTableList()
         {
-            var applicationSettings = ConfigurationManager.GetSection("TableList") as NameValueCollection;
-            List<string> tableList = new List<string>();
+            var tableConfig = (TableConfig)ConfigurationManager.GetSection("TableListConfig");
+            List<TableElement> tableList = new List<TableElement>();
 
-            if (applicationSettings.Count != 0)
+            // Loop through each instance in the TableInstanceCollection
+            foreach (TableInstanceElement instance in tableConfig.TableInstances)
             {
-                foreach (var key in applicationSettings.AllKeys)
-                {
-                    tableList.Add(applicationSettings[key]);
-                }
+                TableElement tableElement = new TableElement();
+                tableElement.Name = instance.Name;
+                tableElement.FromDatabase = instance.Database;
+                tableElement.FromServer = instance.Server;
+                tableList.Add(tableElement);
             }
 
             return tableList;
