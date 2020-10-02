@@ -35,7 +35,7 @@ namespace Octopus.modules.ConfigurationSettings
                 if (string.IsNullOrEmpty(server)) //In case from server is empty, we sent default value
                     return ConfigurationManager.AppSettings.Get("fromServer");
 
-                return fromServer;
+                return server;
             }
             set
             {

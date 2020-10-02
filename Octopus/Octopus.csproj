@@ -105,6 +105,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+    <None Include="App.config.sample" />
     <None Include="DbDefinitions.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

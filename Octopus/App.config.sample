@@ -20,7 +20,7 @@
     <add key="prefix" value="DATADEC"/>
   </appSettings>
 
-  <!-- name (REQUIRED) -> tableName ||| server (OPT) -> serverName or IP where from where it will be read ||| fromdatabase (OPT) -> db name from where it will be read-->
+  <!-- name (REQUIRED) -> tableName ||| fromServer (OPT) -> serverName where from where it will be read (has to match db definitions) ||| toServer (OPT) -> serverName where from where it will be stored (has to match db definitions) ||| fromdatabase (OPT) -> db name from where it will be read-->
   <TableListConfig>
     <tables>
       <add name="EXMOB_VENTA_CAB"></add>
