@@ -165,7 +165,7 @@ namespace Octopus
 
             //Create array with the values so we can use it later to filter the dbDefinitionList
             //string[] bdConfig = new string[] { fromServer, toServer };
-
+            //TODO add all this crap to documentation
             //Generate from Server
             #region GenerateFromServer
             foreach (DbDefinition dbDefinition in dbList.dbDefinitions
@@ -202,7 +202,7 @@ namespace Octopus
 
                 if (!(objectType is null))
                 {
-                    fromDataSource.Add(Activator.CreateInstance(objectType) as DataSource);
+                    fromDataSource.Add(Activator.CreateInstance(objectType, dbDefinition.connectionString) as DataSource);
 
                     //For each datatable that the fromServer name coincides with the processed fromServer we add the latest index
                     foreach (DataTable dataTable in dataTableList.Where(x => x.ExtendedProperties["FromServer"].ToString() == dbDefinition.name))
@@ -251,7 +251,7 @@ namespace Octopus
 
                 if (!(objectType is null))
                 {
-                    toDataSource.Add(Activator.CreateInstance(objectType) as DataSource);
+                    toDataSource.Add(Activator.CreateInstance(objectType,dbDefinition.connectionString) as DataSource);
                     //For each datatable that the toServer name coincides with the processed toServer we add the latest index
                     foreach (DataTable dataTable in dataTableList.Where(x => x.ExtendedProperties["ToServer"].ToString() == dbDefinition.name))
                     {

@@ -21,9 +21,9 @@ namespace Octopus.modules.dbModules
         public Dictionary<string, Type> SQLTypeToCShartpType = new Dictionary<string, Type>();
         public Dictionary<Type, string> CShartpTypeToSQLType = new Dictionary<Type, string>();
 
-        public SQLite() //Construct, creates the connection string and generates types from SQL to C#
+        public SQLite(string sqlConnectionString) //Construct, creates the connection string and generates types from SQL to C#
         {
-            string connectionString = ConfigurationManager.ConnectionStrings["SQLiteConnectionString"].ConnectionString;
+            string connectionString = ConfigurationManager.ConnectionStrings[sqlConnectionString].ConnectionString;
 
             if (string.IsNullOrEmpty(connectionString))
             {
