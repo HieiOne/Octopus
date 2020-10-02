@@ -20,9 +20,10 @@ namespace Octopus.modules.dbModules
         public Dictionary<string, Type> SQLTypeToCShartpType = new Dictionary<string, Type>();
         public Dictionary<Type, string> CShartpTypeToSQLType = new Dictionary<Type, string>();
 
-        public SQLServer() //Initial construct of SQL Server
+        public SQLServer(string sqlConnectionString) //Initial construct of SQL Server
         {
-            string connectionString = ConfigurationManager.ConnectionStrings["SQLServerConnectionString"].ConnectionString;
+            string connectionString = ConfigurationManager.ConnectionStrings[sqlConnectionString].ConnectionString;
+            //TODO add this to documentation to create new modules
 
             if (string.IsNullOrEmpty(connectionString)) 
             {

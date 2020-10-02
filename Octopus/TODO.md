@@ -1,6 +1,6 @@
 Add a design for the software, allowing non-tech users to use this piece of software
 
-Allow multiple origins
+Allow multiple origins -- DONE -- Add to documentation (specially how to use two same servers)
 
 Capability to support any origin
 
