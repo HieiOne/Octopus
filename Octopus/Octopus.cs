@@ -269,6 +269,29 @@ namespace Octopus
                 throw new NotImplementedException();
             }
 
+            bool error = false; // We do it this way so we can present all of the errors to the user at once
+
+            //Check every table has an index to a datasource
+            foreach (DataTable dataTable in dataTableList)
+            { 
+                if (!(dataTable.ExtendedProperties.ContainsKey("FromServerIndex")))
+                {
+                    Messages.WriteError($"The server {dataTable.ExtendedProperties["FromServer"].ToString()} couldn't be found for table {dataTable.TableName}");
+                    error = true;
+                }
+                if (!(dataTable.ExtendedProperties.ContainsKey("ToServerIndex")))
+                {
+                    Messages.WriteError($"The server {dataTable.ExtendedProperties["ToServer"].ToString()} couldn't be found for table {dataTable.TableName}");
+                    error = true;
+                }
+            }
+
+            if (error) 
+            {
+                Console.Read();
+                throw new NotImplementedException();
+            }
+
             return (fromDataSource, toDataSource);
         }
 
