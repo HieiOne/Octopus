@@ -45,6 +45,7 @@ namespace Octopus
                     DataTable dataTable = new DataTable();
                     dataTable.TableName = table.Name;
                     dataTable.ExtendedProperties.Add("FromServer", table.FromServer);
+                    dataTable.ExtendedProperties.Add("ToServer", table.ToServer);
                     dataTable.ExtendedProperties.Add("FromDatabase", table.FromDatabase);
                     dataTable.Prefix = prefix;
                     dataTableList.Add(dataTable);
@@ -106,12 +107,19 @@ namespace Octopus
             }
             else
             {
-                (DataSource fromDataSource, DataSource toDataSource) = ReadDbDefinitions(fromServer, toServer);
+                List<DataSource> FromDataSources = new List<DataSource>();
+                List<DataSource> ToDataSources = new List<DataSource>();
+
+                List<string> test = dataTableList.Select(x => x.ExtendedProperties["FromServer"].ToString()).Distinct().ToList();
+
+                (DataSource fromDataSource, DataSource toDataSource) = ReadDbDefinitions(dataTableList.Select(x => x.ExtendedProperties["FromServer"].ToString()).Distinct().ToList(),
+                                                                                         dataTableList.Select(x => x.ExtendedProperties["ToServer"].ToString()).Distinct().ToList());
 
                 foreach (DataTable dataTable in dataTableList)
                 {
                     //TODO check for SQL Injection
                     Console.WriteLine(dataTable.TableName);
+                    //TODO Pick from datasource list the correct one
                     fromDataSource.ReadTable(dataTable);
                     toDataSource.WriteTable(dataTable);
                     Console.WriteLine("==================================================="); //Little separator
@@ -148,7 +156,7 @@ namespace Octopus
         /// <param name="fromServer"></param>
         /// <param name="toServer"></param>
         /// <returns></returns>
-        public static (DataSource fromDataSource, DataSource toDataSource) ReadDbDefinitions(string fromServer, string toServer)
+        public static (DataSource fromDataSource, DataSource toDataSource) ReadDbDefinitions(List<string> fromServer, List<string> toServer)
         {
             // read file into a string and deserialize JSON to a type
             DbDefinitionList dbList = JsonConvert.DeserializeObject<DbDefinitionList>(File.ReadAllText(@".\DbDefinitions.json"));

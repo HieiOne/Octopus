@@ -24,23 +24,43 @@ namespace Octopus.modules.ConfigurationSettings
             }
         }
 
-        [ConfigurationProperty("server")]
-        public string Server
+        [ConfigurationProperty("fromServer")]
+        public string FromServer
         {
             get
             {
                 // Return the value of the 'server' attribute as a string
-                string server = (string)base["server"];
+                string server = (string)base["fromServer"];
 
                 if (string.IsNullOrEmpty(server)) //In case from server is empty, we sent default value
                     return ConfigurationManager.AppSettings.Get("fromServer");
+
+                return fromServer;
+            }
+            set
+            {
+                // Set the value of the 'server' attribute
+                base["server"] = value;
+            }
+        }
+
+        [ConfigurationProperty("toServer")]
+        public string ToServer
+        {
+            get
+            {
+                // Return the value of the 'server' attribute as a string
+                string server = (string)base["toServer"];
+
+                if (string.IsNullOrEmpty(server)) //In case from server is empty, we sent default value
+                    return ConfigurationManager.AppSettings.Get("toServer");
 
                 return server;
             }
             set
             {
                 // Set the value of the 'server' attribute
-                base["server"] = value;
+                base["toServer"] = value;
             }
         }
 
