@@ -2,7 +2,7 @@
 <configuration>
 
   <configSections>
-    <section name ="TableList" type="System.Configuration.NameValueSectionHandler"/>
+    <section name="TableListConfig" type="Octopus.modules.ConfigurationSettings.TableConfig, Octopus"/>
   </configSections>
 
   <startup>
@@ -10,28 +10,34 @@
   </startup>
 
   <appSettings>
-    <add key="fromDB" value="SQLite"/>
-    <add key="toDB" value="SQLServer"/>
+    <add key="fromServer" value="SQLite"/>
+    <add key="toServer" value="SQLServer"/>
+    
+    <add key="fromDB" value=""/>
+    <add key="toDB" value="MAXI"/>
 
     <!--<add key="suffix" value=""/>-->
     <add key="prefix" value="DATADEC"/>
   </appSettings>
 
-  <TableList>
-    <add key="EXMOB_VENTA_CAB"            value="EXMOB_VENTA_CAB"/>
-    <add key="EXMOB_VENTA_DET"            value="EXMOB_VENTA_DET"/>
-    <add key="EXMOB_ESTADO_TRANSMISION"   value="EXMOB_ESTADO_TRANSMISION"/>
-    <add key="EPALI_CLIENTE_SUCURSAL"     value="EPALI_CLIENTE_SUCURSAL"/>
-    <add key="EPALI_CABECERA_COMPOSICION" value="EPALI_CABECERA_COMPOSICION"/>
-    <add key="EPALI_CUERPO_COMPOSICION"   value="EPALI_CUERPO_COMPOSICION"/>
-    <add key="EPALI_EMPRESA"              value="EPALI_EMPRESA"/>
-    <add key="EPALI_FAMILIA"              value="EPALI_FAMILIA"/>
-    <add key="EPALI_ARTICULO"             value="EPALI_ARTICULO"/>
-    <add key="EPALI_PROMOCION_PRECIO"     value="EPALI_PROMOCION_PRECIO"/>
-    <add key="EPALI_REPRESENTANTE"        value="EPALI_REPRESENTANTE"/>
-    <add key="EPALI_TARIFA_CAB"           value="EPALI_TARIFA_CAB"/>
-    <add key="EPALI_TARIFA_DET"           value="EPALI_TARIFA_DET"/>
-  </TableList>
+  <!-- name (REQUIRED) -> tableName ||| server (OPT) -> serverName or IP where from where it will be read ||| fromdatabase (OPT) -> db name from where it will be read-->
+  <TableListConfig>
+    <tables>
+      <add name="EXMOB_VENTA_CAB"></add>
+      <add name="EXMOB_VENTA_DET"/>
+      <add name="EXMOB_ESTADO_TRANSMISION"/>
+      <add name="EPALI_CLIENTE_SUCURSAL"/>
+      <add name="EPALI_CABECERA_COMPOSICION"/>
+      <add name="EPALI_CUERPO_COMPOSICION"/>
+      <add name="EPALI_EMPRESA"/>
+      <add name="EPALI_FAMILIA"/>
+      <add name="EPALI_ARTICULO"/>
+      <add name="EPALI_PROMOCION_PRECIO"/>
+      <add name="EPALI_REPRESENTANTE"/>
+      <add name="EPALI_TARIFA_CAB"/>
+      <add name="EPALI_TARIFA_DET"/>
+    </tables>
+  </TableListConfig>
 
   <connectionStrings>
     <add name="SQLServerConnectionString" connectionString="Data Source=;Initial Catalog=;User ID=;Password="/>
