@@ -2,16 +2,16 @@
   "dbDefinitions": //If you want to support a new DB just add it in the file
   [
     {
-      "name":  "SQLServer",
-      "fromDB": "false",
-      "toDB": "true",
+      "name": "SQLServer",
+      "fromServer": "false",
+      "toServer": "true",
       "className": "SQLServer",
       "connectionString": "SQLServerConnectionString"
     },
     {
       "name": "SQLite",
-      "fromDB": "true",
-      "toDB": "false",
+      "fromServer": "true",
+      "toServer": "false",
       "className": "SQLite",
       "connectionString": "SQLiteConnectionString"
     }

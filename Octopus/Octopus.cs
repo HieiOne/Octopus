@@ -97,16 +97,16 @@ namespace Octopus
         /// <param name="dataTableList"></param>
         static void Run(List<DataTable> dataTableList)
         {
-            string fromDB = ConfigurationManager.AppSettings.Get("fromDB");
-            string toDB = ConfigurationManager.AppSettings.Get("toDB");
+            string fromServer = ConfigurationManager.AppSettings.Get("fromServer");
+            string toServer = ConfigurationManager.AppSettings.Get("toServer");
 
-            if (string.IsNullOrEmpty(fromDB) || string.IsNullOrEmpty(toDB))
+            if (string.IsNullOrEmpty(fromServer) || string.IsNullOrEmpty(toServer))
             {
-                Messages.WriteError("The configuration of fromDB or toDB is empty");
+                Messages.WriteError("The configuration of fromServer or toServer is empty");
             }
             else
             {
-                (DataSource fromDataSource, DataSource toDataSource) = ReadDbDefinitions(fromDB, toDB);
+                (DataSource fromDataSource, DataSource toDataSource) = ReadDbDefinitions(fromServer, toServer);
 
                 foreach (DataTable dataTable in dataTableList)
                 {
@@ -136,8 +136,8 @@ namespace Octopus
         class DbDefinition
         {
             public string name { get; set; }
-            public bool fromDB { get; set; }
-            public bool toDB { get; set; }
+            public bool fromServer { get; set; }
+            public bool toServer { get; set; }
             public string className { get; set; }
             public string connectionString { get; set; }
         }
@@ -145,27 +145,27 @@ namespace Octopus
         /// <summary>
         /// Reads JSON Dbdefinitions and tries to instantiate the objects requested by App.config file
         /// </summary>
-        /// <param name="fromDB"></param>
-        /// <param name="toDB"></param>
+        /// <param name="fromServer"></param>
+        /// <param name="toServer"></param>
         /// <returns></returns>
-        public static (DataSource fromDataSource, DataSource toDataSource) ReadDbDefinitions(string fromDB, string toDB)
+        public static (DataSource fromDataSource, DataSource toDataSource) ReadDbDefinitions(string fromServer, string toServer)
         {
             // read file into a string and deserialize JSON to a type
             DbDefinitionList dbList = JsonConvert.DeserializeObject<DbDefinitionList>(File.ReadAllText(@".\DbDefinitions.json"));
             DataSource fromDataSource = null, toDataSource = null;
 
             //Create array with the values so we can use it later to filter the dbDefinitionList
-            string[] bdConfig = new string[] { fromDB, toDB};
+            string[] bdConfig = new string[] { fromServer, toServer };
             foreach (DbDefinition dbDefinition in dbList.dbDefinitions
                                                             .Where(x => bdConfig.Contains(x.name))
                                                             .ToList<DbDefinition>()
             )
             {
-                if (dbDefinition.name == fromDB) // When matching the selected Datasource and has the value from DB true
+                if (dbDefinition.name == fromServer) // When matching the selected Datasource and has the value from DB true
                 {
-                    if (!dbDefinition.fromDB)
+                    if (!dbDefinition.fromServer)
                     {
-                        Messages.WriteError($"{fromDB} is not implemented yet as origin BD");
+                        Messages.WriteError($"{fromServer} is not implemented yet as origin BD");
                         throw new NotImplementedException();
                     }
 
@@ -176,13 +176,13 @@ namespace Octopus
                         string connectionString = ConfigurationManager.ConnectionStrings[dbDefinition.connectionString].ConnectionString;
                         if (string.IsNullOrEmpty(connectionString))
                         {
-                            Messages.WriteError($"{fromDB} connection string {dbDefinition.connectionString} is not set or is empty");
+                            Messages.WriteError($"{fromServer} connection string {dbDefinition.connectionString} is not set or is empty");
                             throw new NotImplementedException();
                         }
                     }
                     catch (Exception)
                     {
-                        Messages.WriteError($"{fromDB} connection string {dbDefinition.connectionString} is not set or is empty");
+                        Messages.WriteError($"{fromServer} connection string {dbDefinition.connectionString} is not set or is empty");
                         throw;
                     }
                     #endregion
@@ -194,11 +194,11 @@ namespace Octopus
                         fromDataSource = Activator.CreateInstance(objectType) as DataSource;
                 }
 
-                if (dbDefinition.name == toDB) // When matching the selected Datasource and has the value to DB true
+                if (dbDefinition.name == toServer) // When matching the selected Datasource and has the value to DB true
                 {
-                    if (!dbDefinition.toDB)
+                    if (!dbDefinition.toServer)
                     {
-                        Messages.WriteError($"{toDB} is not implemented yet as destiny BD");
+                        Messages.WriteError($"{toServer} is not implemented yet as destiny BD");
                         throw new NotImplementedException();
                     }
 
@@ -209,13 +209,13 @@ namespace Octopus
                         string connectionString = ConfigurationManager.ConnectionStrings[dbDefinition.connectionString].ConnectionString;
                         if (string.IsNullOrEmpty(connectionString))
                         {
-                            Messages.WriteError($"{toDB} connection string {dbDefinition.connectionString} is not set or is empty");
+                            Messages.WriteError($"{toServer} connection string {dbDefinition.connectionString} is not set or is empty");
                             throw new NotImplementedException();
                         }
                     }
                     catch (Exception)
                     {
-                        Messages.WriteError($"{toDB} connection string {dbDefinition.connectionString} is not set or is empty");
+                        Messages.WriteError($"{toServer} connection string {dbDefinition.connectionString} is not set or is empty");
                         throw;
                     }
                     #endregion
@@ -231,7 +231,7 @@ namespace Octopus
 
             if (fromDataSource is null || toDataSource is null) //If any datasource was not found for whatever reason, throw
             {
-                Messages.WriteError($"{fromDB} or {toDB} module not found");
+                Messages.WriteError($"{fromServer} or {toServer} module not found");
                 throw new NotImplementedException();
             }
 
