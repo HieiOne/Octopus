@@ -15,6 +15,8 @@ namespace Octopus.modules.messages
         public static void WriteError(string value, bool log = true)
         {
             //Console.BackgroundColor = ConsoleColor.Red;
+            value = "ERROR: " + value; //Add error in front
+
             Console.ForegroundColor = ConsoleColor.Red;
             Console.WriteLine(value.PadRight(Console.WindowWidth - 1)); // <-- see note
                                                                         //
@@ -43,12 +45,17 @@ namespace Octopus.modules.messages
         public static void WriteSuccess(string value, bool log = true)
         {
             //Console.BackgroundColor = ConsoleColor.Green;
+            value = "OK: " + value; //Add OK in front
+
             Console.ForegroundColor = ConsoleColor.DarkGreen;
             Console.WriteLine(value.PadRight(Console.WindowWidth - 1)); // <-- see note
                                                                         //
                                                                         // Reset the color.
                                                                         //
             Console.ResetColor();
+
+            if (log)
+                Logger(value);
         }
         public static void WriteExecuteQuery(string value, bool log = true)
         {
