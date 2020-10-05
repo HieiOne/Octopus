@@ -57,7 +57,7 @@ namespace Octopus
             {
                 Messages.WriteError("No tables specified in App.Config");
             }
-            Console.Read();
+            //Console.Read();
         }
 
         /// <summary>
@@ -126,7 +126,7 @@ namespace Octopus
 
                 }
             }
-            Console.WriteLine("DONE");
+            Messages.WriteSuccess("DONE");
         }
 
         /// <summary>
