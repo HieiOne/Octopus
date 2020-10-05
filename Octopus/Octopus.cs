@@ -57,7 +57,7 @@ namespace Octopus
             {
                 Messages.WriteError("No tables specified in App.Config");
             }
-            Console.Read();
+            //Console.Read();
         }
 
         /// <summary>
@@ -119,14 +119,17 @@ namespace Octopus
                 foreach (DataTable dataTable in dataTableList)
                 {
                     //TODO check for SQL Injection
-                    Console.WriteLine(dataTable.TableName);
+                    Messages.WriteQuestion(dataTable.TableName);
+                    Console.WriteLine(); // Jump for clarity
                     FromDataSources[Convert.ToInt32(dataTable.ExtendedProperties["FromServerIndex"].ToString())].ReadTable(dataTable);
                     ToDataSources[Convert.ToInt32(dataTable.ExtendedProperties["ToServerIndex"].ToString())].WriteTable(dataTable);
-                    Console.WriteLine("==================================================="); //Little separator
+                    Console.WriteLine(); // Jump for clarity
+                    Messages.WriteQuestion("==================================================="); //Little separator
+                    Console.WriteLine(); // Jump for clarity
 
                 }
             }
-            Console.WriteLine("DONE");
+            Messages.WriteSuccess("DONE");
         }
 
         /// <summary>

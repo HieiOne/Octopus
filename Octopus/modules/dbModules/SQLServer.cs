@@ -289,7 +289,7 @@ namespace Octopus.modules.dbModules
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine(e.Message);
+                    Messages.WriteError(e.Message);
                 }
             }
         }
