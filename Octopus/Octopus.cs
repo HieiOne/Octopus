@@ -135,7 +135,7 @@ namespace Octopus
         /// <summary>
         /// List composed of DbDefinitions used to run a foreach
         /// </summary>
-        class DbDefinitionList
+        public class DbDefinitionList
         {
             public List<DbDefinition> dbDefinitions { get; set; }
 
@@ -144,13 +144,23 @@ namespace Octopus
         /// <summary>
         /// Class for the DbDefinition JSON
         /// </summary>
-        class DbDefinition
+        public class DbDefinition
         {
             public string name { get; set; }
             public bool fromServer { get; set; }
             public bool toServer { get; set; }
             public string className { get; set; }
             public string connectionString { get; set; }
+        }
+
+        /// <summary>
+        /// Reads JSON and returns a DbDefinitionList
+        /// </summary>
+        /// <param name="file"></param>
+        /// <returns></returns>
+        public static DbDefinitionList JSONDbDefinitions(string file)
+        {
+            return JsonConvert.DeserializeObject<DbDefinitionList>(File.ReadAllText(file));
         }
 
         /// <summary>
@@ -162,7 +172,7 @@ namespace Octopus
         public static (List<DataSource> fromDataSource, List<DataSource> toDataSource) ReadDbDefinitions(List<string> fromServer, List<string> toServer, List<DataTable> dataTableList)
         {
             // read file into a string and deserialize JSON to a type
-            DbDefinitionList dbList = JsonConvert.DeserializeObject<DbDefinitionList>(File.ReadAllText(@".\DbDefinitions.json"));
+            DbDefinitionList dbList = JSONDbDefinitions(@".\DbDefinitions.json");
             List<DataSource> fromDataSource = new List<DataSource>();
             List<DataSource> toDataSource = new List<DataSource>();
 
