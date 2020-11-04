@@ -8,8 +8,6 @@ using System.Collections.Specialized;
 using System.Diagnostics;
 using Octopus.modules.messages;
 using System.Data;
-using Newtonsoft.Json;
-using System.IO;
 using Octopus.modules.dbModules;
 using Octopus.modules.ConfigurationSettings;
 
@@ -34,7 +32,7 @@ namespace Octopus
              */
 
             Debug.WriteLine("Reading Config file . . .");
-            tableList = ConfigurationTableList();
+            tableList = TableElement.ConfigurationTableList();
 
             if (tableList.Count() != 0)
             {
@@ -58,41 +56,6 @@ namespace Octopus
                 Messages.WriteError("No tables specified in App.Config");
             }
             //Console.Read();
-        }
-
-        /// <summary>
-        /// Class we use for the configuration table list
-        /// </summary>
-        class TableElement
-        { 
-            public string Name { get; set; }
-            public string FromDatabase { get; set; }
-            public string FromServer { get; set; }
-            public string ToServer { get; set; }
-
-        }
-
-        /// <summary>
-        /// Reads from configuration list the section TableList, converts it to a List<string> and returns it
-        /// </summary>
-        /// <returns>List<string></returns>
-        static List<TableElement> ConfigurationTableList()
-        {
-            var tableConfig = (TableConfig)ConfigurationManager.GetSection("TableListConfig");
-            List<TableElement> tableList = new List<TableElement>();
-
-            // Loop through each instance in the TableInstanceCollection
-            foreach (TableInstanceElement instance in tableConfig.TableInstances)
-            {
-                TableElement tableElement = new TableElement();
-                tableElement.Name = instance.Name;
-                tableElement.FromDatabase = instance.Database;
-                tableElement.FromServer = instance.FromServer;
-                tableElement.ToServer = instance.ToServer;
-                tableList.Add(tableElement);
-            }
-
-            return tableList;
         }
 
         /// <summary>
@@ -133,37 +96,6 @@ namespace Octopus
         }
 
         /// <summary>
-        /// List composed of DbDefinitions used to run a foreach
-        /// </summary>
-        public class DbDefinitionList
-        {
-            public List<DbDefinition> dbDefinitions { get; set; }
-
-        }
-
-        /// <summary>
-        /// Class for the DbDefinition JSON
-        /// </summary>
-        public class DbDefinition
-        {
-            public string name { get; set; }
-            public bool fromServer { get; set; }
-            public bool toServer { get; set; }
-            public string className { get; set; }
-            public string connectionString { get; set; }
-        }
-
-        /// <summary>
-        /// Reads JSON and returns a DbDefinitionList
-        /// </summary>
-        /// <param name="file"></param>
-        /// <returns></returns>
-        public static DbDefinitionList JSONDbDefinitions(string file)
-        {
-            return JsonConvert.DeserializeObject<DbDefinitionList>(File.ReadAllText(file));
-        }
-
-        /// <summary>
         /// Reads JSON Dbdefinitions and tries to instantiate the objects requested by App.config file
         /// </summary>
         /// <param name="fromServer"></param>
@@ -172,7 +104,7 @@ namespace Octopus
         public static (List<DataSource> fromDataSource, List<DataSource> toDataSource) ReadDbDefinitions(List<string> fromServer, List<string> toServer, List<DataTable> dataTableList)
         {
             // read file into a string and deserialize JSON to a type
-            DbDefinitionList dbList = JSONDbDefinitions(@".\DbDefinitions.json");
+            DbDefinitionList dbList = DbDefinitionList.JSONDbDefinitions(@".\DbDefinitions.json");
             List<DataSource> fromDataSource = new List<DataSource>();
             List<DataSource> toDataSource = new List<DataSource>();
 
@@ -185,6 +117,8 @@ namespace Octopus
                                                             .ToList<DbDefinition>()
             )
             {
+                string connectionString;
+
                 if (!dbDefinition.fromServer)
                 {
                     Messages.WriteError($"{fromServer} is not implemented yet as origin BD");
@@ -195,7 +129,7 @@ namespace Octopus
                 //Check to control that the connection string is replenished if not throw error
                 try
                 {
-                    string connectionString = ConfigurationManager.ConnectionStrings[dbDefinition.connectionString].ConnectionString;
+                    connectionString = ConfigurationManager.ConnectionStrings[dbDefinition.connectionString].ConnectionString;
                     if (string.IsNullOrEmpty(connectionString))
                     {
                         Messages.WriteError($"{fromServer} connection string {dbDefinition.connectionString} is not set or is empty");
@@ -214,7 +148,7 @@ namespace Octopus
 
                 if (!(objectType is null))
                 {
-                    fromDataSource.Add(Activator.CreateInstance(objectType, dbDefinition.connectionString) as DataSource);
+                    fromDataSource.Add(Activator.CreateInstance(objectType, connectionString) as DataSource);
 
                     //For each datatable that the fromServer name coincides with the processed fromServer we add the latest index
                     foreach (DataTable dataTable in dataTableList.Where(x => x.ExtendedProperties["FromServer"].ToString() == dbDefinition.name))
@@ -234,6 +168,8 @@ namespace Octopus
                                                 .ToList<DbDefinition>()
             )
             {
+                string connectionString;
+
                 if (!dbDefinition.toServer)
                 {
                     Messages.WriteError($"{toServer} is not implemented yet as destiny BD");
@@ -244,7 +180,7 @@ namespace Octopus
                 //Check to control that the connection string is replenished if not throw error
                 try
                 {
-                    string connectionString = ConfigurationManager.ConnectionStrings[dbDefinition.connectionString].ConnectionString;
+                    connectionString = ConfigurationManager.ConnectionStrings[dbDefinition.connectionString].ConnectionString;
                     if (string.IsNullOrEmpty(connectionString))
                     {
                         Messages.WriteError($"{toServer} connection string {dbDefinition.connectionString} is not set or is empty");
@@ -263,7 +199,7 @@ namespace Octopus
 
                 if (!(objectType is null))
                 {
-                    toDataSource.Add(Activator.CreateInstance(objectType,dbDefinition.connectionString) as DataSource);
+                    toDataSource.Add(Activator.CreateInstance(objectType, connectionString) as DataSource);
                     //For each datatable that the toServer name coincides with the processed toServer we add the latest index
                     foreach (DataTable dataTable in dataTableList.Where(x => x.ExtendedProperties["ToServer"].ToString() == dbDefinition.name))
                     {

@@ -3,7 +3,6 @@ using Octopus.modules.messages;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Configuration;
 using System.Data;
 using System.Data.Common;
 using System.Linq;
@@ -12,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace Octopus.modules.dbModules
 {
-    class SQLite : DataSource
+    public class SQLite : DataSource
     {
         private readonly SqliteConnection sqliteConnection;
         private SqliteDataReader dataReader;
@@ -22,7 +21,7 @@ namespace Octopus.modules.dbModules
 
         public SQLite(string sqlConnectionString) //Construct, creates the connection string and generates types from SQL to C#
         {
-            string connectionString = ConfigurationManager.ConnectionStrings[sqlConnectionString].ConnectionString;
+            string connectionString = sqlConnectionString;
 
             if (string.IsNullOrEmpty(connectionString))
             {
