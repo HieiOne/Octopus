@@ -26,4 +26,39 @@ namespace Octopus.modules.ConfigurationSettings
         }
 
     }
+
+    /// <summary>
+    /// Class we use for the configuration table list
+    /// </summary>
+    class TableElement
+    {
+        public string Name { get; set; }
+        public string FromDatabase { get; set; }
+        public string FromServer { get; set; }
+        public string ToServer { get; set; }
+
+
+        /// <summary>
+        /// Reads from configuration list the section TableList, converts it to a List<string> and returns it
+        /// </summary>
+        /// <returns>List<string></returns>
+        public static List<TableElement> ConfigurationTableList()
+        {
+            var tableConfig = (TableConfig)ConfigurationManager.GetSection("TableListConfig");
+            List<TableElement> tableList = new List<TableElement>();
+
+            // Loop through each instance in the TableInstanceCollection
+            foreach (TableInstanceElement instance in tableConfig.TableInstances)
+            {
+                TableElement tableElement = new TableElement();
+                tableElement.Name = instance.Name;
+                tableElement.FromDatabase = instance.Database;
+                tableElement.FromServer = instance.FromServer;
+                tableElement.ToServer = instance.ToServer;
+                tableList.Add(tableElement);
+            }
+
+            return tableList;
+        }
+    }
 }

@@ -100,6 +100,7 @@
     <Compile Include="modules\ConfigurationSettings\TableInstanceCollection.cs" />
     <Compile Include="modules\ConfigurationSettings\TableInstanceElement.cs" />
     <Compile Include="modules\dbModules\DataSource.cs" />
+    <Compile Include="modules\dbModules\DbDefintion.cs" />
     <Compile Include="modules\dbModules\SQLite.cs" />
     <Compile Include="modules\dbModules\SQLServer.cs" />
     <Compile Include="modules\messages\Messages.cs" />

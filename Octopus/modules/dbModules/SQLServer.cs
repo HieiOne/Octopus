@@ -2,7 +2,6 @@ using Octopus.modules.messages;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
@@ -11,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace Octopus.modules.dbModules
 {
-    class SQLServer : DataSource
+    public class SQLServer : DataSource
     {        
         private readonly SqlConnection sqlConnection;
         private SqlTransaction sqlTransaction;
@@ -22,7 +21,7 @@ namespace Octopus.modules.dbModules
 
         public SQLServer(string sqlConnectionString) //Initial construct of SQL Server
         {
-            string connectionString = ConfigurationManager.ConnectionStrings[sqlConnectionString].ConnectionString;
+            string connectionString = sqlConnectionString;
 
             if (string.IsNullOrEmpty(connectionString)) 
             {
