@@ -14,6 +14,13 @@
       "toServer": "false",
       "className": "SQLite",
       "connectionString": "SQLiteConnectionString"
+    },
+    {
+      "name": "Oracle",
+      "fromServer": "true",
+      "toServer": "false",
+      "className": "Oracle",
+      "connectionString": "OracleConnectionString"
     }
   ]
   

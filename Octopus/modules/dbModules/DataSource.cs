@@ -85,5 +85,19 @@ namespace Octopus.modules.dbModules
         /// <param name="dataTable"></param>
         public abstract void WriteTable(DataTable dataTable);
 
+
+        /// <summary>
+        /// Adds all rows of the table to the datatable
+        /// </summary>
+        /// <param name="dataTable"></param>
+        public abstract void GetRowsTable(DataTable dataTable);
+
+        /// <summary>
+        /// Adds the dataschema to the datatable
+        /// </summary>
+        /// <param name="dataTable"></param>
+        public abstract void GetSchemaTable(DataTable dataTable);
+
+
     }
 }

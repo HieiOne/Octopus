@@ -66,6 +66,7 @@ namespace Octopus
         {
             string fromServer = ConfigurationManager.AppSettings.Get("fromServer");
             string toServer = ConfigurationManager.AppSettings.Get("toServer");
+            Messages.WriteSuccess("Start of process: " + DateTime.Now.ToString());
 
             if (string.IsNullOrEmpty(fromServer) || string.IsNullOrEmpty(toServer))
             {
@@ -92,6 +93,7 @@ namespace Octopus
 
                 }
             }
+            Messages.WriteSuccess("End of process: " + DateTime.Now.ToString());
             Messages.WriteSuccess("DONE");
         }
 
