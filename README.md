@@ -9,8 +9,6 @@ This project is still not in v1, meaning the core isn't fully ready for any use 
 
 # **Own view about the project:**
 
-> #### This project is rather ambitious from my point of view. I think it is the biggest project I've worked on until now.
-
 > #### As the logo says: "Moving data from sea to sea" is a reference to the main functionality of this software, move any data from any db (or file) to any other db (or file) while keeping the fidelity of origin, for example if origin is a SQLite with a TEXT(20) it will create a new table in SQLServer as VARCHAR(20) (Or NVARCHAR in case it allows nulls)
 
 > #### There's a lot of casuistic, that's why this project is designed in modules with the help of a json file for the definitions. Read [How to create a new Module] if you want to create a new one. As I said, the main plan is to allow the mobility of data from anywhere to everywhere you want but that's near impossible at this stage of the project, it needs a lot of definition and work, feel free to create your own modules for this project.
