@@ -66,6 +66,7 @@ namespace Octopus
         {
             string fromServer = ConfigurationManager.AppSettings.Get("fromServer");
             string toServer = ConfigurationManager.AppSettings.Get("toServer");
+            long lMemoryMB;
             Messages.WriteSuccess("Start of process: " + DateTime.Now.ToString());
 
             if (string.IsNullOrEmpty(fromServer) || string.IsNullOrEmpty(toServer))
@@ -80,17 +81,26 @@ namespace Octopus
                 (FromDataSources, ToDataSources) = ReadDbDefinitions(dataTableList.Select(x => x.ExtendedProperties["FromServer"].ToString()).Distinct().ToList()
                                                                                          ,dataTableList.Select(x => x.ExtendedProperties["ToServer"].ToString()).Distinct().ToList()
                                                                                          ,dataTableList);
+
                 foreach (DataTable dataTable in dataTableList)
                 {
                     //TODO check for SQL Injection
                     Messages.WriteQuestion(dataTable.TableName);
                     Console.WriteLine(); // Jump for clarity
+
                     FromDataSources[Convert.ToInt32(dataTable.ExtendedProperties["FromServerIndex"].ToString())].ReadTable(dataTable);
+
                     ToDataSources[Convert.ToInt32(dataTable.ExtendedProperties["ToServerIndex"].ToString())].WriteTable(dataTable);
                     Console.WriteLine(); // Jump for clarity
                     Messages.WriteQuestion("==================================================="); //Little separator
-                    Console.WriteLine(); // Jump for clarity
+                    Console.WriteLine(); // Jump for clarity                 
 
+                    //lMemoryMB = GC.GetTotalMemory(true/* true = Collect garbage before measuring */) / 1024 / 1024; // memory in megabytes
+
+                    /* Dispose of the used dataTable to clear memory */
+                    dataTable.Rows.Clear();
+                    dataTable.Columns.Clear();
+                    dataTable.Clear();
                 }
             }
             Messages.WriteSuccess("End of process: " + DateTime.Now.ToString());
