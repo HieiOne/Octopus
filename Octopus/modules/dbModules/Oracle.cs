@@ -1,41 +1,41 @@
-﻿using Microsoft.Data.Sqlite;
-using Octopus.modules.messages;
+﻿using Octopus.modules.messages;
+using Oracle.ManagedDataAccess.Client;
+using Oracle.ManagedDataAccess.Types;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.Common;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace Octopus.modules.dbModules
 {
-    public class SQLite : DataSource
+    public class Oracle : DataSource
     {
-        private readonly SqliteConnection sqliteConnection;
-        private SqliteDataReader dataReader;
+        private readonly OracleConnection oracleConnection;
+        private OracleTransaction oracleTransaction;
+        private OracleDataReader dataReader;
 
         public Dictionary<string, Type> SQLTypeToCShartpType = new Dictionary<string, Type>();
         public Dictionary<Type, string> CShartpTypeToSQLType = new Dictionary<Type, string>();
 
-        public SQLite(string sqlConnectionString) //Construct, creates the connection string and generates types from SQL to C#
+        public Oracle(string sqlConnectionString)
         {
             string connectionString = sqlConnectionString;
 
             if (string.IsNullOrEmpty(connectionString))
             {
-                Messages.WriteError("SQLiteConnectionString not found, please specify it in the App.Config");
+                Messages.WriteError("OracleConnectionString not found, please specify it in the App.Config");
                 throw new NotImplementedException();
             }
 
-            sqliteConnection = new SqliteConnection(connectionString);
-            GenerateTypeDictionaries(); //Generate type dictionaries for mapping types
+            oracleConnection = new OracleConnection(connectionString);
+            GenerateTypeDictionaries();
         }
 
         public override void BeginTransaction()
         {
-            throw new NotImplementedException();
+            oracleTransaction = oracleConnection.BeginTransaction();
         }
 
         public override void CloseReader()
@@ -45,15 +45,15 @@ namespace Octopus.modules.dbModules
 
         public override void CommitTransaction()
         {
-            throw new NotImplementedException();
+            oracleTransaction.Commit();
         }
 
         public override void Connect()
         {
             try
             {
-                sqliteConnection.Open();
-                Messages.WriteSuccess("Connected to SQLite succesfully");
+                oracleConnection.Open();           
+                Messages.WriteSuccess("Connected to Oracle Server succesfully");
             }
             catch (Exception e)
             {
@@ -66,8 +66,8 @@ namespace Octopus.modules.dbModules
         {
             try
             {
-                sqliteConnection.Close();
-                Messages.WriteSuccess("Disconnected from SQLite succesfully");
+                oracleConnection.Close();
+                Messages.WriteSuccess("Disconnected from Oracle Server succesfully");
             }
             catch (Exception e)
             {
@@ -83,13 +83,13 @@ namespace Octopus.modules.dbModules
 
         public override void OpenReader(string query)
         {
-            SqliteCommand readSqlite = new SqliteCommand(query, sqliteConnection);
+            OracleCommand readOracle = new OracleCommand(query, oracleConnection);
 
             try
             {
-                dataReader = readSqlite.ExecuteReader();
+                dataReader = readOracle.ExecuteReader();                
             }
-            catch (SqliteException e) when (e.ErrorCode == -2147467259)
+            catch (OracleException e) //when (e.ErrorCode == -2147467259)
             {
                 Messages.WriteError(e.Message);
                 //return 0; //Error
@@ -101,18 +101,19 @@ namespace Octopus.modules.dbModules
             throw new NotImplementedException();
         }
 
-        /// <summary>
-        /// This class must call other methods to create the Schema (Columns + Keys) of the table and add the datarows
-        /// </summary>
-        /// <param name="dataTable"></param>
         public override void ReadTable(DataTable dataTable)
         {
-            Connect(); // Connect to the DB
+            Connect();
 
             GetSchemaTable(dataTable);
             GetRowsTable(dataTable);
 
-            Disconnect(); // Disconnects from the DB
+            Disconnect();
+        }
+
+        public override void WriteTable(DataTable dataTable)
+        {
+            throw new NotImplementedException();
         }
 
         /// <summary>
@@ -121,49 +122,24 @@ namespace Octopus.modules.dbModules
         /// <param name="dataTable"></param>
         public override void GetSchemaTable(DataTable dataTable)
         {
-            string query = $"SELECT [cid],[name],[type],[notnull],[dflt_value],[pk] FROM PRAGMA_TABLE_INFO('{dataTable.TableName}')";
+            string query = $"SELECT COLUMN_ID,COLUMN_NAME,DATA_TYPE,NULLABLE,NULL as DEFAULT_VALUE,0 as PK,DATA_LENGTH,NVL(DATA_PRECISION,0) FROM USER_TAB_COLUMNS WHERE TABLE_NAME = '{dataTable.TableName}' ORDER BY 1";
             OpenReader(query);
 
             if (dataReader.HasRows)
             {
                 while (dataReader.Read())
                 {
-                    string dimension,dataType = dataReader.GetString(2);
-                    int lenght = -1, precision = 0;
-
-                    // We use this try to catch the IndexOutOfRangeException because of splitting and not stop the program
-                    try
-                    {
-                        dimension = dataType.Split('(', ')')[1]; //We get value between parenthesis to get lenght
-                        dataType = dataType.Split('(', ')')[0];
-                        if (dimension.Contains(",")) //If the value is separated by commas it must be a REAL with precision
-                        {
-                            lenght = Convert.ToInt32(dimension.Split(',')[0]);
-                            precision = Convert.ToInt32(dimension.Split(',')[1]);
-                        }
-                        else
-                        {
-                            lenght = Convert.ToInt32(dimension);
-                        }
-                    }
-                    catch (IndexOutOfRangeException)
-                    {
-                        //We do nothing we just keep everything as is
-                        //Since Split fails because there's no "(" and ")" it doesn't have lenght nor precision and every will have their default values
-                        //DataType it's kept as is since it already is a full-self type (without lenght or precision, usually a DATETIME)
-                        //throw;
-                    }
+                    string dataType = dataReader.GetString(2);
 
                     DataColumn dataColumn = new DataColumn();
 
                     dataColumn.ColumnName = dataReader.GetString(1);
                     dataColumn.DataType = SQLTypeToCShartpType[dataType];
-                    dataColumn.AllowDBNull = !dataReader.GetBoolean(3); //En SQL Lite el campo es NOT NULL entonces revertimos el valor
+                    dataColumn.AllowDBNull = dataReader.GetString(3) == "Y" ? true : false; //En SQL Lite el campo es NOT NULL entonces revertimos el valor
                     dataColumn.DefaultValue = dataReader.IsDBNull(4) ? null : dataReader.GetString(4);
-                    //dataColumn.Unique = dataReader.GetInt32(5) != 0 ? true : false;
                     dataColumn.ExtendedProperties.Add("SQL_Type", dataReader.GetString(2));
-                    dataColumn.ExtendedProperties.Add("Precision", precision);
-                    dataColumn.ExtendedProperties.Add("Lenght", lenght);
+                    dataColumn.ExtendedProperties.Add("Lenght", dataReader.GetInt32(6));
+                    dataColumn.ExtendedProperties.Add("Precision", dataReader.GetInt32(7));
                     dataColumn.ExtendedProperties.Add("Primary_Key_Order", dataReader.GetInt32(5));
 
                     dataTable.Columns.Add(dataColumn);
@@ -187,15 +163,11 @@ namespace Octopus.modules.dbModules
             CloseReader();
         }
 
-        /// <summary>
-        /// Adds all rows of the table to the datatable
-        /// </summary>
-        /// <param name="dataTable"></param>
         public override void GetRowsTable(DataTable dataTable)
         {
-            string query = $"SELECT * FROM '{dataTable.TableName}'";
+            string query = $"SELECT * FROM {dataTable.TableName}";
             OpenReader(query);
-            
+
             if (dataReader.HasRows)
             {
                 while (dataReader.Read())
@@ -205,9 +177,19 @@ namespace Octopus.modules.dbModules
                     for (int i = 0; i < dataTable.Columns.Count; i++)
                     {
                         DataColumn dataColumn = dataTable.Columns[i]; // I rather have it in a different variable and ref it later
+                        
+                        object columnValue;
+                        try
+                        {
+                            columnValue = dataReader.GetValue(i);
+                        }
+                        catch (InvalidCastException) when (dataReader.GetOracleValue(i) is OracleDecimal)
+                        {
+                            columnValue = (decimal)(OracleDecimal.SetPrecision(dataReader.GetOracleDecimal(i), 28));
+                        }
 
-                        if (!(dataReader.GetValue(i) is DBNull))
-                            dataRow[dataColumn] = Convert.ChangeType(dataReader.GetValue(i),dataColumn.DataType);
+                        if (!(columnValue is DBNull))
+                            dataRow[dataColumn] = Convert.ChangeType(columnValue, dataColumn.DataType);
                     }
 
                     dataTable.Rows.Add(dataRow);
@@ -223,28 +205,30 @@ namespace Octopus.modules.dbModules
             CloseReader();
         }
 
-        /// <summary>
-        /// Replenishes the dictionaries SQLTypeToCShartpType & CShartpTypeToSQLType
-        /// </summary>
         public override void GenerateTypeDictionaries()
         {
-            AddToDictionaries("INTEGER", typeof(Int32));
-            AddToDictionaries("TEXT", typeof(string));
-            AddToDictionaries("REAL", typeof(decimal));
-            AddToDictionaries("BLOB", typeof(Byte[]));
-            AddToDictionaries("DATETIME", typeof(DateTime));
+            //https://docs.microsoft.com/es-es/dotnet/framework/data/adonet/oracle-data-type-mappings
+            AddToDictionaries("NUMBER", typeof(decimal),true);
+            AddToDictionaries("VARCHAR2", typeof(string),true);
+            AddToDictionaries("ROWID", typeof(string));
+            AddToDictionaries("CLOB", typeof(string));
+            AddToDictionaries("FLOAT", typeof(decimal));
+            AddToDictionaries("BLOB", typeof(Byte[]),true);
+            AddToDictionaries("RAW", typeof(Byte[]));
+            AddToDictionaries("XMLTYPE", typeof(Byte[]));
+            AddToDictionaries("DATE", typeof(DateTime),true);
+            AddToDictionaries("TIMESTAMP(3)", typeof(DateTime));
+            AddToDictionaries("TIMESTAMP(6)", typeof(DateTime));
 
             //Local function to add to both dictionaries
-            void AddToDictionaries(string sqlType, Type cSharpType)
+            //Primary parameter is used to specify which one should be the one used by default
+            void AddToDictionaries(string sqlType, Type cSharpType, bool primary=false)
             {
                 SQLTypeToCShartpType.Add(sqlType, cSharpType);
-                CShartpTypeToSQLType.Add(cSharpType, sqlType);
+                if(primary)
+                    CShartpTypeToSQLType.Add(cSharpType, sqlType);
             }
         }
 
-        public override void WriteTable(DataTable dataTable)
-        {
-            throw new NotImplementedException();
-        }
     }
 }

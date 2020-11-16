@@ -215,7 +215,7 @@ namespace Octopus.modules.dbModules
                     //This string will be used to define lenght and precision e.g (17,2)
                     string lenghtAndPrecision = null; //As starters empty
 
-                    if (dataColumn.ExtendedProperties["Lenght"].ToString() != "-1" && typeName != "INTEGER")
+                    if (dataColumn.ExtendedProperties["Lenght"].ToString() != "-1" && typeName != "INTEGER" && typeName != "DATETIME")
                     {
                         if (dataColumn.ExtendedProperties["Precision"].ToString() != "0")
                         {
@@ -295,7 +295,7 @@ namespace Octopus.modules.dbModules
 
         public override void GenerateTypeDictionaries()
         {
-            AddToDictionaries("INTEGER", typeof(Int32));
+            AddToDictionaries("INT", typeof(Int32));
             AddToDictionaries("NVARCHAR", typeof(string)); // We dont use varchar so we can support Unicode strings
             AddToDictionaries("DECIMAL", typeof(decimal));
             AddToDictionaries("VARBINARY(MAX)", typeof(Byte[]));
@@ -307,6 +307,16 @@ namespace Octopus.modules.dbModules
                 SQLTypeToCShartpType.Add(sqlType, cSharpType);
                 CShartpTypeToSQLType.Add(cSharpType, sqlType);
             }
+        }
+
+        public override void GetRowsTable(DataTable dataTable)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void GetSchemaTable(DataTable dataTable)
+        {
+            throw new NotImplementedException();
         }
     }
 }
