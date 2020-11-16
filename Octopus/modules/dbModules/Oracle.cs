@@ -1,5 +1,6 @@
 ﻿using Octopus.modules.messages;
 using Oracle.ManagedDataAccess.Client;
+using Oracle.ManagedDataAccess.Types;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -164,7 +165,7 @@ namespace Octopus.modules.dbModules
 
         public override void GetRowsTable(DataTable dataTable)
         {
-            string query = $"SELECT * FROM {dataTable.TableName} WHERE DOC_ORDEN_COMPRA = 712 AND DOC_ITEM = 1";
+            string query = $"SELECT * FROM {dataTable.TableName}";
             OpenReader(query);
 
             if (dataReader.HasRows)
@@ -176,9 +177,19 @@ namespace Octopus.modules.dbModules
                     for (int i = 0; i < dataTable.Columns.Count; i++)
                     {
                         DataColumn dataColumn = dataTable.Columns[i]; // I rather have it in a different variable and ref it later
+                        
+                        object columnValue;
+                        try
+                        {
+                            columnValue = dataReader.GetValue(i);
+                        }
+                        catch (InvalidCastException) when (dataReader.GetOracleValue(i) is OracleDecimal)
+                        {
+                            columnValue = (decimal)(OracleDecimal.SetPrecision(dataReader.GetOracleDecimal(i), 28));
+                        }
 
-                        if (!(dataReader.GetValue(i) is DBNull))
-                            dataRow[dataColumn] = Convert.ChangeType(dataReader.GetValue(i), dataColumn.DataType);
+                        if (!(columnValue is DBNull))
+                            dataRow[dataColumn] = Convert.ChangeType(columnValue, dataColumn.DataType);
                     }
 
                     dataTable.Rows.Add(dataRow);
