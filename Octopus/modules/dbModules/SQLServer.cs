@@ -153,7 +153,7 @@ namespace Octopus.modules.dbModules
         {
             //TODO Add config for db and schema
             bool exists = false;
-            string query = $"SELECT CASE WHEN OBJECT_ID('MAXI.dbo.{tableName}', 'U') IS NOT NULL THEN 1 ELSE 0 END";
+            string query = $"SELECT CASE WHEN OBJECT_ID('{OctopusConfig.toDB}.dbo.{tableName}', 'U') IS NOT NULL THEN 1 ELSE 0 END";
             
             OpenReader(query);
 
@@ -179,7 +179,7 @@ namespace Octopus.modules.dbModules
         /// <param name="tableName"></param>
         private void DropTable(string tableName)
         {
-            string query = $"DROP TABLE MAXI.dbo.{tableName}";
+            string query = $"DROP TABLE {OctopusConfig.toDB}.dbo.{tableName}";
 
             if (TableExists(tableName))
             {
@@ -208,7 +208,7 @@ namespace Octopus.modules.dbModules
             {
                 StringBuilder builder = new StringBuilder();
 
-                query = $"CREATE TABLE MAXI.dbo.{dataTable.Prefix}{dataTable.TableName} ( "; // Inicio de Create
+                query = $"CREATE TABLE {OctopusConfig.toDB}.dbo.{dataTable.Prefix}{dataTable.TableName} ( "; // Inicio de Create
                 builder.Append(query);
 
                 int i = 1; //Start at 1 because the property Count doesn't start from 0
@@ -284,7 +284,7 @@ namespace Octopus.modules.dbModules
             using (SqlBulkCopy bulkCopy = new SqlBulkCopy(sqlConnection,SqlBulkCopyOptions.Default,sqlTransaction))
             {
                 //TODO add DB and Schema
-                bulkCopy.DestinationTableName = $"MAXI.dbo.{dataTable.Prefix}{dataTable.TableName}";
+                bulkCopy.DestinationTableName = $"{OctopusConfig.toDB}.dbo.{dataTable.Prefix}{dataTable.TableName}";
 
                 try
                 {
