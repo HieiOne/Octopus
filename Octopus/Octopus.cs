@@ -291,7 +291,7 @@ namespace Octopus
         public static Dictionary<string, string> connectionKeyValues = new Dictionary<string, string>();
         public static string prefix; //Default values
         public static string fromServer, toServer; //Default values
-        public static string fromDB /*,toDB*/; //Default values
+        public static string fromDB,toDB; //Default values
         public static string logPath; //Default values
 
         /// <summary>
@@ -328,6 +328,7 @@ namespace Octopus
                 fromServer = appSettings.Settings["fromServer"].Value;
                 toServer = appSettings.Settings["toServer"].Value;
                 fromDB = appSettings.Settings["fromDB"].Value;
+                toDB = appSettings.Settings["toDB"].Value;
                 logPath = appSettings.Settings["LogPath"].Value;
             }
             #endregion
