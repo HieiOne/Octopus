@@ -127,16 +127,21 @@ namespace Octopus.modules.dbModules
 
         public override void WriteTable(DataTable dataTable)
         {
-            Connect(); // Connect to the DB
-            BeginTransaction(); //TTSBegin, we create everything or nothing
-
-            DropTable($"{dataTable.Prefix}{dataTable.TableName}");
-            CreateTable(dataTable); //TODO Check if table has changes and update instead of dropping and creating
-            InsertRows(dataTable);
-
-            CommitTransaction(); //TTSCommit, we create everything or nothing
-            Messages.WriteSuccess("Commited changes");
-            Disconnect(); // Disconnects from the DB
+            if(dataTable.Columns.Count > 0) //If it has any columns
+            {
+                Connect(); // Connect to the DB
+                BeginTransaction(); //TTSBegin, we create everything or nothing
+                
+                DropTable($"{dataTable.Prefix}{dataTable.TableName}");
+                CreateTable(dataTable); //TODO Check if table has changes and update instead of dropping and creating.
+                if(dataTable.Rows.Count > 0) //If it has any rows
+                    InsertRows(dataTable);
+                
+                CommitTransaction(); //TTSCommit, we create everything or nothing
+                Messages.WriteSuccess("Commited changes");
+                
+                Disconnect(); // Disconnects from the DB
+            }
         }
 
         /// <summary>
