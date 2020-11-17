@@ -42,9 +42,20 @@ namespace Octopus.modules.ConfigurationSettings
         /// Reads from configuration list the section TableList, converts it to a List<string> and returns it
         /// </summary>
         /// <returns>List<string></returns>
-        public static List<TableElement> ConfigurationTableList()
+        /// <param name="configuration"></param>
+        public static List<TableElement> ConfigurationTableList(Configuration configuration = null)
         {
-            var tableConfig = (TableConfig)ConfigurationManager.GetSection("TableListConfig");
+            dynamic tableConfig;
+
+            if (configuration == null)
+            { 
+                tableConfig = (TableConfig)ConfigurationManager.GetSection("TableListConfig");
+            }
+            else
+            { 
+                tableConfig = (TableConfig)configuration.GetSection("TableListConfig");            
+            }
+
             List<TableElement> tableList = new List<TableElement>();
 
             // Loop through each instance in the TableInstanceCollection

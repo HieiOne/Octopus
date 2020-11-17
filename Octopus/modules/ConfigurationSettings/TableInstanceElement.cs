@@ -32,9 +32,6 @@ namespace Octopus.modules.ConfigurationSettings
                 // Return the value of the 'server' attribute as a string
                 string server = (string)base["fromServer"];
 
-                if (string.IsNullOrEmpty(server)) //In case from server is empty, we sent default value
-                    return ConfigurationManager.AppSettings.Get("fromServer");
-
                 return server;
             }
             set
@@ -52,9 +49,6 @@ namespace Octopus.modules.ConfigurationSettings
                 // Return the value of the 'server' attribute as a string
                 string server = (string)base["toServer"];
 
-                if (string.IsNullOrEmpty(server)) //In case from server is empty, we sent default value
-                    return ConfigurationManager.AppSettings.Get("toServer");
-
                 return server;
             }
             set
@@ -71,9 +65,6 @@ namespace Octopus.modules.ConfigurationSettings
             {
                 // Return the value of the 'database' attribute as a string
                 string fromdatabase = (string)base["fromdatabase"];
-
-                if(string.IsNullOrEmpty(fromdatabase)) //In case from database is empty, we sent default value
-                    return ConfigurationManager.AppSettings.Get("fromDB");
 
                 return fromdatabase;
             }

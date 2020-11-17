@@ -10,52 +10,78 @@ using Octopus.modules.messages;
 using System.Data;
 using Octopus.modules.dbModules;
 using Octopus.modules.ConfigurationSettings;
+using NDesk.Options;
+using System.IO;
 
 namespace Octopus
 {
     class Octopus
     {
+        static int verbosity;
+
         static void Main(string[] args)
         {
-            List<DataTable> dataTableList = new List<DataTable>();
-            List<TableElement> tableList;
+            string configPath = null;
+            bool show_help = false;
 
-            string prefix = ConfigurationManager.AppSettings.Get("prefix") + "_";
-            //string suffix = "_" + ConfigurationManager.AppSettings.Get("suffix");
-            
-            if (prefix.Length == 1) // Without value
-                prefix = null;
+            var p = new OptionSet() {          
+                { "c|config=", "the {NAME} of someone to greet.",
+                    v => configPath = v },
+                { "v", "increase debug message verbosity",
+                  v => { if (v != null) ++verbosity; } },
+                { "h|help",  "show this message and exit",
+                  v => show_help = v != null },
+            };
 
-            /*
-             * if (suffix.Length == 1) // Without value
-             *   suffix = null;
-             */
-
-            Debug.WriteLine("Reading Config file . . .");
-            tableList = TableElement.ConfigurationTableList();
-
-            if (tableList.Count() != 0)
+            List<string> extra;
+            try
             {
-                Debug.WriteLine("Read Config file succesfully");
+                extra = p.Parse(args);
+            }
+            catch (OptionException e)
+            {
+                Console.Write("Octopus: ");
+                Console.WriteLine(e.Message);
+                Console.WriteLine("Try `Octopus --help' for more information.");
+                return;
+            }
 
-                foreach (TableElement table in tableList) //Convert the list of strings to Data Tables
-                {
-                    DataTable dataTable = new DataTable();
-                    dataTable.TableName = table.Name;
-                    dataTable.ExtendedProperties.Add("FromServer", table.FromServer);
-                    dataTable.ExtendedProperties.Add("ToServer", table.ToServer);
-                    dataTable.ExtendedProperties.Add("FromDatabase", table.FromDatabase);
-                    dataTable.Prefix = prefix;
-                    dataTableList.Add(dataTable);
-                }
+            if (show_help)
+            {
+                ShowHelp(p);
+                return;
+            }
 
-                Run(dataTableList);
+            if (string.IsNullOrEmpty(configPath))
+            {
+                OctopusConfig.LoadConfig();
+                Messages.WriteQuestion("Using default config");
             }
             else
             {
-                Messages.WriteError("No tables specified in App.Config");
+                if (File.Exists(configPath))
+                {
+                    OctopusConfig.LoadConfig(configPath);
+                    Messages.WriteQuestion("Using config.. " + configPath);
+                }
+                else
+                {
+                    Messages.WriteError("Config file: " + configPath + " doesn't exist");
+                    return;
+                }
             }
-            //Console.Read();
+
+            Run(OctopusConfig.dataTableList);
+        }
+
+        static void ShowHelp(OptionSet p)
+        {
+            Console.WriteLine("Usage: Octopus [OPTIONS]");
+            //Console.WriteLine("Greet a list of individuals with an optional message.");
+            //Console.WriteLine("If no message is specified, a generic greeting is used.");
+            Console.WriteLine();
+            Console.WriteLine("Options:");
+            p.WriteOptionDescriptions(Console.Out);
         }
 
         /// <summary>
@@ -63,9 +89,9 @@ namespace Octopus
         /// </summary>
         /// <param name="dataTableList"></param>
         static void Run(List<DataTable> dataTableList)
-        {
-            string fromServer = ConfigurationManager.AppSettings.Get("fromServer");
-            string toServer = ConfigurationManager.AppSettings.Get("toServer");
+        {            
+            string fromServer = OctopusConfig.fromServer;
+            string toServer = OctopusConfig.toServer;
             //long lMemoryMB;
             Messages.WriteSuccess("Start of process: " + DateTime.Now.ToString());
 
@@ -89,7 +115,6 @@ namespace Octopus
                     Console.WriteLine(); // Jump for clarity
 
                     FromDataSources[Convert.ToInt32(dataTable.ExtendedProperties["FromServerIndex"].ToString())].ReadTable(dataTable);
-
                     ToDataSources[Convert.ToInt32(dataTable.ExtendedProperties["ToServerIndex"].ToString())].WriteTable(dataTable);
                     Console.WriteLine(); // Jump for clarity
                     Messages.WriteQuestion("==================================================="); //Little separator
@@ -98,12 +123,14 @@ namespace Octopus
                     //lMemoryMB = GC.GetTotalMemory(true/* true = Collect garbage before measuring */) / 1024 / 1024; // memory in megabytes
 
                     /* Dispose of the used dataTable to clear memory */
+                    dataTable.PrimaryKey = null;
                     dataTable.Rows.Clear();
                     dataTable.Columns.Clear();
                     dataTable.Clear();
                     GC.Collect(); //Force collect
                 }
             }
+
             Messages.WriteSuccess("End of process: " + DateTime.Now.ToString());
             Messages.WriteSuccess("DONE");
         }
@@ -142,7 +169,7 @@ namespace Octopus
                 //Check to control that the connection string is replenished if not throw error
                 try
                 {
-                    connectionString = ConfigurationManager.ConnectionStrings[dbDefinition.connectionString].ConnectionString;
+                    connectionString = OctopusConfig.connectionKeyValues[dbDefinition.connectionString];
                     if (string.IsNullOrEmpty(connectionString))
                     {
                         Messages.WriteError($"{fromServer} connection string {dbDefinition.connectionString} is not set or is empty");
@@ -193,7 +220,7 @@ namespace Octopus
                 //Check to control that the connection string is replenished if not throw error
                 try
                 {
-                    connectionString = ConfigurationManager.ConnectionStrings[dbDefinition.connectionString].ConnectionString;
+                    connectionString = OctopusConfig.connectionKeyValues[dbDefinition.connectionString];
                     if (string.IsNullOrEmpty(connectionString))
                     {
                         Messages.WriteError($"{toServer} connection string {dbDefinition.connectionString} is not set or is empty");
@@ -255,6 +282,96 @@ namespace Octopus
 
             return (fromDataSource, toDataSource);
         }
+    }
 
+    static class OctopusConfig 
+    {
+        //This class is destined to contain the config and have it accesible from everywhere
+
+        public static List<DataTable> dataTableList = new List<DataTable>(); //List of tables to process
+        public static Dictionary<string, string> connectionKeyValues = new Dictionary<string, string>();
+        public static string prefix; //Default values
+        public static string fromServer, toServer; //Default values
+        public static string fromDB,toDB; //Default values
+        public static string logPath; //Default values
+
+        /// <summary>
+        /// This method reads the config file if the path is given then it will read and load that config if not, it will read the default one
+        /// </summary>
+        /// <param name="path"></param>
+        public static void LoadConfig(string path = null)
+        {
+            Configuration configuration = null;
+            if (path != null) // We load the specified config file
+            {
+                var map = new ExeConfigurationFileMap
+                {
+                    ExeConfigFilename = path,
+                    LocalUserConfigFilename = path,
+                    RoamingUserConfigFilename = path
+                };
+
+                configuration = ConfigurationManager.OpenMappedExeConfiguration(map, ConfigurationUserLevel.None);
+            }
+            else //We load the default config file
+            {
+                configuration = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
+            }
+
+            #region AppSettingsValues
+            var appSettings = configuration.GetSection("appSettings") as AppSettingsSection;
+            if (appSettings != null)
+            {
+                prefix = appSettings.Settings["prefix"].Value + "_";
+                if (prefix.Length == 1) //Without value
+                    prefix = null;
+
+                fromServer = appSettings.Settings["fromServer"].Value;
+                toServer = appSettings.Settings["toServer"].Value;
+                fromDB = appSettings.Settings["fromDB"].Value;
+                toDB = appSettings.Settings["toDB"].Value;
+                logPath = appSettings.Settings["LogPath"].Value;
+            }
+            #endregion
+
+            #region ReadingTables
+            List<TableElement> tableList;
+            tableList = TableElement.ConfigurationTableList(configuration);
+
+            Debug.WriteLine("Reading Config file . . .");
+
+            if (tableList.Count() != 0)
+            {
+                Debug.WriteLine("Read Config file succesfully");
+
+                foreach (TableElement table in tableList) //Convert the list of strings to Data Tables
+                {
+                    DataTable dataTable = new DataTable();
+                    dataTable.TableName = table.Name;
+                    //In case of null we fill the default value
+                    dataTable.ExtendedProperties.Add("FromServer", string.IsNullOrEmpty(table.FromServer) ? fromServer : table.FromServer);
+                    dataTable.ExtendedProperties.Add("ToServer", string.IsNullOrEmpty(table.ToServer) ? toServer : table.ToServer);
+                    dataTable.ExtendedProperties.Add("FromDatabase", string.IsNullOrEmpty(table.FromDatabase) ? fromDB : table.FromDatabase);
+                    dataTable.Prefix = prefix;
+                    dataTableList.Add(dataTable);
+                }
+            }
+            else
+            {
+                Messages.WriteError("No tables specified in App.Config");
+            }
+            #endregion
+
+            #region ConnectionStrings
+            var connectionSettings = configuration.GetSection("connectionStrings") as ConnectionStringsSection;
+            if (connectionSettings != null)
+            {
+                foreach (ConnectionStringSettings connectionStringSettings in connectionSettings.ConnectionStrings)
+                {
+                    connectionKeyValues.Add(connectionStringSettings.Name, connectionStringSettings.ConnectionString);
+                }
+            }
+            #endregion
+        }
     }
 }

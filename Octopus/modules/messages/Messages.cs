@@ -76,7 +76,7 @@ namespace Octopus.modules.messages
         public static void Logger(string logMessage)
         {
             string format = "-yyyyMMdd-hhmmsstt", formatLines = "hh:mm:ss";
-            string fileName = ConfigurationManager.AppSettings["LogPath"] + "log" + dateNow.ToString(format) + ".txt";
+            string fileName = OctopusConfig.logPath + "log" + dateNow.ToString(format) + ".txt";
             
             try
             {
@@ -84,7 +84,7 @@ namespace Octopus.modules.messages
             }
             catch (DirectoryNotFoundException)
             {
-                Directory.CreateDirectory(ConfigurationManager.AppSettings["LogPath"]);
+                Directory.CreateDirectory(OctopusConfig.logPath);
                 Logger(logMessage); // ;D
             }
 
