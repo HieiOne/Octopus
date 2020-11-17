@@ -157,7 +157,7 @@ namespace Octopus.modules.dbModules
             else
             {
                 Messages.WriteError($"The table {dataTable.TableName} has no columns or wasn't found");
-                throw new NotImplementedException();
+                //throw new NotImplementedException();
             }
 
             CloseReader();
@@ -168,7 +168,7 @@ namespace Octopus.modules.dbModules
             string query = $"SELECT * FROM {dataTable.TableName}";
             OpenReader(query);
 
-            if (dataReader.HasRows)
+            if (!(dataReader.IsClosed) && dataReader.HasRows)
             {
                 while (dataReader.Read())
                 {
@@ -198,8 +198,8 @@ namespace Octopus.modules.dbModules
             }
             else
             {
-                Messages.WriteError($"The table {dataTable.TableName} has no columns or wasn't found");
-                throw new NotImplementedException();
+                Messages.WriteError($"The table {dataTable.TableName} has no rows or wasn't found");
+                //throw new NotImplementedException();
             }
 
             CloseReader();
