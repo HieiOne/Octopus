@@ -101,6 +101,7 @@ namespace Octopus
                     dataTable.Rows.Clear();
                     dataTable.Columns.Clear();
                     dataTable.Clear();
+                    GC.Collect(); //Force collect
                 }
             }
             Messages.WriteSuccess("End of process: " + DateTime.Now.ToString());
