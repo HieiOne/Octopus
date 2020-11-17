@@ -66,7 +66,7 @@ namespace Octopus
         {
             string fromServer = ConfigurationManager.AppSettings.Get("fromServer");
             string toServer = ConfigurationManager.AppSettings.Get("toServer");
-            long lMemoryMB;
+            //long lMemoryMB;
             Messages.WriteSuccess("Start of process: " + DateTime.Now.ToString());
 
             if (string.IsNullOrEmpty(fromServer) || string.IsNullOrEmpty(toServer))
