@@ -130,7 +130,7 @@ namespace Octopus.modules.dbModules
                 while (dataReader.Read())
                 {
                     string dataType = dataReader.GetString(2);
-
+                    int lenght = dataReader.GetInt32(6) + dataReader.GetInt32(7); //This is done to avoid the precision and number to excess the Lenght of the field
                     DataColumn dataColumn = new DataColumn();
 
                     dataColumn.ColumnName = dataReader.GetString(1);
@@ -138,7 +138,7 @@ namespace Octopus.modules.dbModules
                     dataColumn.AllowDBNull = dataReader.GetString(3) == "Y" ? true : false; //En SQL Lite el campo es NOT NULL entonces revertimos el valor
                     dataColumn.DefaultValue = dataReader.IsDBNull(4) ? null : dataReader.GetString(4);
                     dataColumn.ExtendedProperties.Add("SQL_Type", dataReader.GetString(2));
-                    dataColumn.ExtendedProperties.Add("Lenght", dataReader.GetInt32(6));
+                    dataColumn.ExtendedProperties.Add("Lenght", lenght > 38 ? 38 : lenght );
                     dataColumn.ExtendedProperties.Add("Precision", dataReader.GetInt32(7));
                     dataColumn.ExtendedProperties.Add("Primary_Key_Order", dataReader.GetInt32(5));
 
