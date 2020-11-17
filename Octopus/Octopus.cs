@@ -123,6 +123,7 @@ namespace Octopus
                     //lMemoryMB = GC.GetTotalMemory(true/* true = Collect garbage before measuring */) / 1024 / 1024; // memory in megabytes
 
                     /* Dispose of the used dataTable to clear memory */
+                    dataTable.PrimaryKey = null;
                     dataTable.Rows.Clear();
                     dataTable.Columns.Clear();
                     dataTable.Clear();
