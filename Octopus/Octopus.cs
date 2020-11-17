@@ -21,7 +21,6 @@ namespace Octopus
 
         static void Main(string[] args)
         {
-            //TODO make this a parameter
             string configPath = null;
             bool show_help = false;
 
@@ -322,7 +321,10 @@ namespace Octopus
             var appSettings = configuration.GetSection("appSettings") as AppSettingsSection;
             if (appSettings != null)
             {
-                prefix = appSettings.Settings["prefix"].Value;
+                prefix = appSettings.Settings["prefix"].Value + "_";
+                if (prefix.Length == 1) //Without value
+                    prefix = null;
+
                 fromServer = appSettings.Settings["fromServer"].Value;
                 toServer = appSettings.Settings["toServer"].Value;
                 fromDB = appSettings.Settings["fromDB"].Value;
