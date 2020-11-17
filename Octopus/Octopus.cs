@@ -54,15 +54,15 @@ namespace Octopus
 
             if (string.IsNullOrEmpty(configPath))
             {
-                Messages.WriteQuestion("Using default config");
                 OctopusConfig.LoadConfig();
+                Messages.WriteQuestion("Using default config");
             }
             else
             {
-                Messages.WriteQuestion("Using config.. " + configPath);
                 if (File.Exists(configPath))
                 {
                     OctopusConfig.LoadConfig(configPath);
+                    Messages.WriteQuestion("Using config.. " + configPath);
                 }
                 else
                 {
