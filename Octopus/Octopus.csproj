@@ -111,6 +111,7 @@
     <Compile Include="modules\dbModules\SQLite.cs" />
     <Compile Include="modules\dbModules\SQLServer.cs" />
     <Compile Include="modules\messages\Messages.cs" />
+    <Compile Include="modules\messages\ProgressBar.cs" />
     <Compile Include="Octopus.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
