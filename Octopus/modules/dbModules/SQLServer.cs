@@ -188,7 +188,7 @@ namespace Octopus.modules.dbModules
             }
             else
             {
-                Messages.WriteError($"Table {tableName} couldn't be removed either because of permissions or because the table doesn't exist");
+                Messages.WriteWarning($"Table {tableName} couldn't be removed either because of permissions or because the table doesn't exist");
             }
         }
 
@@ -283,7 +283,7 @@ namespace Octopus.modules.dbModules
         {
             using (SqlBulkCopy bulkCopy = new SqlBulkCopy(sqlConnection,SqlBulkCopyOptions.Default,sqlTransaction))
             {
-                //TODO add DB and Schema
+                //TODO add Schema
                 bulkCopy.DestinationTableName = $"{OctopusConfig.toDB}.dbo.{dataTable.Prefix}{dataTable.TableName}";
                 bulkCopy.BulkCopyTimeout = 90; //90 seconds of timeout
 

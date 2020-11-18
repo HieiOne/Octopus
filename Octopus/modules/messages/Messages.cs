@@ -28,6 +28,22 @@ namespace Octopus.modules.messages
                 Logger(value);
         }
 
+        public static void WriteWarning(string value, bool log = true)
+        {
+            //Console.BackgroundColor = ConsoleColor.Red;
+            value = "WARNING: " + value; //Add error in front
+
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.WriteLine(value.PadRight(Console.WindowWidth - 1)); // <-- see note
+                                                                        //
+                                                                        // Reset the color.
+                                                                        //
+            Console.ResetColor();
+
+            if (log)
+                Logger(value);
+        }
+
         public static void WriteQuestion(string value, bool log = true)
         {
             //Console.BackgroundColor = ConsoleColor.Blue;
