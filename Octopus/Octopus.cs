@@ -102,7 +102,7 @@ namespace Octopus
         {            
             string fromServer = OctopusConfig.fromServer;
             string toServer = OctopusConfig.toServer;
-            //long lMemoryMB;
+            long lMemoryMB;
             Messages.WriteSuccess("Start of process: " + DateTime.Now.ToString());
 
             if (string.IsNullOrEmpty(fromServer) || string.IsNullOrEmpty(toServer))
@@ -118,15 +118,16 @@ namespace Octopus
                                                                                          ,dataTableList.Select(x => x.ExtendedProperties["ToServer"].ToString()).Distinct().ToList()
                                                                                          ,dataTableList);
 
+                int processedTableCount = 0;
                 foreach (DataTable dataTable in dataTableList)
                 {
                     //TODO check for SQL Injection
-                    Messages.WriteQuestion(dataTable.TableName);
+                    //Messages.WriteQuestion(dataTable.TableName);
+                    lMemoryMB = GC.GetTotalMemory(true/* true = Collect garbage before measuring */) / 1024 / 1024; // memory in megabytes
+                    ProgressBar.WriteProgressBar(processedTableCount*100/dataTableList.Count,processedTableCount,dataTableList.Count, lMemoryMB, true, dataTable.TableName);
                     FromDataSources[Convert.ToInt32(dataTable.ExtendedProperties["FromServerIndex"].ToString())].ReadTable(dataTable);
                     ToDataSources[Convert.ToInt32(dataTable.ExtendedProperties["ToServerIndex"].ToString())].WriteTable(dataTable);
                     Messages.WriteQuestion("==================================================="); //Little separator
-
-                    //lMemoryMB = GC.GetTotalMemory(true/* true = Collect garbage before measuring */) / 1024 / 1024; // memory in megabytes
 
                     /* Dispose of the used dataTable to clear memory */
                     dataTable.PrimaryKey = null;
@@ -134,6 +135,7 @@ namespace Octopus
                     dataTable.Columns.Clear();
                     dataTable.Clear();
                     GC.Collect(); //Force collect
+                    processedTableCount++;
                 }
             }
 
