@@ -285,6 +285,7 @@ namespace Octopus.modules.dbModules
             {
                 //TODO add DB and Schema
                 bulkCopy.DestinationTableName = $"{OctopusConfig.toDB}.dbo.{dataTable.Prefix}{dataTable.TableName}";
+                bulkCopy.BulkCopyTimeout = 90; //90 seconds of timeout
 
                 try
                 {
@@ -294,6 +295,7 @@ namespace Octopus.modules.dbModules
                 catch (Exception e)
                 {
                     Messages.WriteError(e.Message);
+                    //throw;
                 }
             }
         }
