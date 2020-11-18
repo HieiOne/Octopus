@@ -17,12 +17,15 @@ namespace Octopus.modules.messages
             //Console.BackgroundColor = ConsoleColor.Red;
             value = "ERROR: " + value; //Add error in front
 
-            Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine(value.PadRight(Console.WindowWidth - 1)); // <-- see note
-                                                                        //
-                                                                        // Reset the color.
-                                                                        //
-            Console.ResetColor();
+            if (OctopusConfig.console_verbosity > 0)
+            { 
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine(value.PadRight(Console.WindowWidth - 1)); // <-- see note
+                                                                            //
+                                                                            // Reset the color.
+                                                                            //
+                Console.ResetColor();
+            }
 
             if (log)
                 Logger(value);
@@ -33,12 +36,15 @@ namespace Octopus.modules.messages
             //Console.BackgroundColor = ConsoleColor.Red;
             value = "WARNING: " + value; //Add error in front
 
-            Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine(value.PadRight(Console.WindowWidth - 1)); // <-- see note
-                                                                        //
-                                                                        // Reset the color.
-                                                                        //
-            Console.ResetColor();
+            if (OctopusConfig.console_verbosity > 0)
+            {
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Console.WriteLine(value.PadRight(Console.WindowWidth - 1)); // <-- see note
+                                                                            //
+                                                                            // Reset the color.
+                                                                            //
+                Console.ResetColor();
+            }
 
             if (log)
                 Logger(value);
@@ -47,12 +53,15 @@ namespace Octopus.modules.messages
         public static void WriteQuestion(string value, bool log = true)
         {
             //Console.BackgroundColor = ConsoleColor.Blue;
-            Console.ForegroundColor = ConsoleColor.Blue;
-            Console.WriteLine(value); // <-- see note
-                                      //
-                                      // Reset the color.
-                                      //
-            Console.ResetColor();
+            if (OctopusConfig.console_verbosity > 0)
+            {
+                Console.ForegroundColor = ConsoleColor.Blue;
+                Console.WriteLine(value); // <-- see note
+                                          //
+                                          // Reset the color.
+                                          //
+                Console.ResetColor();
+            }
 
             if (log)
                 Logger(value);
@@ -63,12 +72,15 @@ namespace Octopus.modules.messages
             //Console.BackgroundColor = ConsoleColor.Green;
             value = "OK: " + value; //Add OK in front
 
-            Console.ForegroundColor = ConsoleColor.DarkGreen;
-            Console.WriteLine(value.PadRight(Console.WindowWidth - 1)); // <-- see note
-                                                                        //
-                                                                        // Reset the color.
-                                                                        //
-            Console.ResetColor();
+            if (OctopusConfig.console_verbosity > 0)
+            {
+                Console.ForegroundColor = ConsoleColor.DarkGreen;
+                Console.WriteLine(value.PadRight(Console.WindowWidth - 1)); // <-- see note
+                                                                            //
+                                                                            // Reset the color.
+                                                                            //
+                Console.ResetColor();
+            }
 
             if (log)
                 Logger(value);
@@ -76,14 +88,17 @@ namespace Octopus.modules.messages
         public static void WriteExecuteQuery(string value, bool log = true)
         {
             //Console.BackgroundColor = ConsoleColor.Green;
-            Console.WriteLine();
-            Console.ForegroundColor = ConsoleColor.DarkYellow;
-            Console.WriteLine(value.PadRight(Console.WindowWidth - 1)); // <-- see note
-                                                                        //
-                                                                        // Reset the color.
-                                                                        //
-            Console.WriteLine();
-            Console.ResetColor();
+            if (OctopusConfig.console_verbosity > 0)
+            {
+                Console.WriteLine();
+                Console.ForegroundColor = ConsoleColor.DarkYellow;
+                Console.WriteLine(value.PadRight(Console.WindowWidth - 1)); // <-- see note
+                                                                            //
+                                                                            // Reset the color.
+                                                                            //
+                Console.WriteLine();
+                Console.ResetColor();
+            }
 
             if (log)
                 Logger(value);

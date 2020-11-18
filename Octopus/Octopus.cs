@@ -52,6 +52,12 @@ namespace Octopus
                 return;
             }
 
+            if (verbosity > 0)
+            {
+                //TODO active console or design verbosiy
+                OctopusConfig.console_verbosity = verbosity;
+            }
+
             if (string.IsNullOrEmpty(configPath))
             {
                 OctopusConfig.LoadConfig();
@@ -112,13 +118,9 @@ namespace Octopus
                 {
                     //TODO check for SQL Injection
                     Messages.WriteQuestion(dataTable.TableName);
-                    Console.WriteLine(); // Jump for clarity
-
                     FromDataSources[Convert.ToInt32(dataTable.ExtendedProperties["FromServerIndex"].ToString())].ReadTable(dataTable);
                     ToDataSources[Convert.ToInt32(dataTable.ExtendedProperties["ToServerIndex"].ToString())].WriteTable(dataTable);
-                    Console.WriteLine(); // Jump for clarity
                     Messages.WriteQuestion("==================================================="); //Little separator
-                    Console.WriteLine(); // Jump for clarity                 
 
                     //lMemoryMB = GC.GetTotalMemory(true/* true = Collect garbage before measuring */) / 1024 / 1024; // memory in megabytes
 
@@ -287,7 +289,7 @@ namespace Octopus
     static class OctopusConfig 
     {
         //This class is destined to contain the config and have it accesible from everywhere
-
+        public static int console_verbosity;
         public static List<DataTable> dataTableList = new List<DataTable>(); //List of tables to process
         public static Dictionary<string, string> connectionKeyValues = new Dictionary<string, string>();
         public static string prefix; //Default values
