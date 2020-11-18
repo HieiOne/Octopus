@@ -52,6 +52,10 @@ namespace Octopus
                 return;
             }
 
+            #if DEBUG //If in debug increase the verbosity automatically
+                verbosity++;
+            #endif
+
             if (verbosity > 0)
             {
                 //TODO active console or design verbosiy

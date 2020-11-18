@@ -220,7 +220,7 @@ namespace Octopus.modules.dbModules
                     //This string will be used to define lenght and precision e.g (17,2)
                     string lenghtAndPrecision = null; //As starters empty
 
-                    if (dataColumn.ExtendedProperties["Lenght"].ToString() != "-1" && typeName != "INT" && typeName != "DATETIME")
+                    if (dataColumn.ExtendedProperties["Lenght"].ToString() != "-1" && typeName != "INT" && typeName != "DATETIME" && typeName != "VARBINARY(MAX)")
                     {
                         if (dataColumn.ExtendedProperties["Precision"].ToString() != "0")
                         {
