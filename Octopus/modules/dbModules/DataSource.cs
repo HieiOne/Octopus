@@ -10,6 +10,10 @@ namespace Octopus.modules.dbModules
 {
     public abstract class DataSource
     {
+        public string dataSourceName { get; set; } //DataSource name
+        public bool fromServer { get; set; } //Indicates if this dataSource is ready to be used as origin
+        public bool toServer { get; set; } //Indicates if this dataSource is ready to be used as destination
+
         /// <summary>
         /// Dictionary which converts SQL Type to C# Type
         /// </summary>

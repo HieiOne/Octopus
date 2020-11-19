@@ -12,6 +12,7 @@ using Octopus.modules.dbModules;
 using Octopus.modules.ConfigurationSettings;
 using NDesk.Options;
 using System.IO;
+using Newtonsoft.Json;
 
 namespace Octopus
 {
@@ -81,7 +82,8 @@ namespace Octopus
                 }
             }
 
-            Run(OctopusConfig.dataTableList);
+            OctopusHandler octopusHandler = new OctopusHandler();
+            octopusHandler.Run();
         }
 
         static void ShowHelp(OptionSet p)
@@ -93,202 +95,132 @@ namespace Octopus
             Console.WriteLine("Options:");
             p.WriteOptionDescriptions(Console.Out);
         }
+    }
 
-        /// <summary>
-        /// Run called after Main recovering the config values
-        /// </summary>
-        /// <param name="dataTableList"></param>
-        static void Run(List<DataTable> dataTableList)
-        {            
-            string fromServer = OctopusConfig.fromServer;
-            string toServer = OctopusConfig.toServer;
-            long lMemoryMB;
+    public class OctopusHandler
+    {
+        Dictionary<string, DataSource> dataSources = new Dictionary<string, DataSource>();
+        long MemoryMB;
+
+        public void Run()
+        {
+            int proccessedTables = 0;
+            int totalTables = OctopusConfig.dataTableList.Count;
+
+            GenerateDataSource(); //Fills the dataSources Dictionary
             Messages.WriteSuccess("Start of process: " + DateTime.Now.ToString());
 
-            if (string.IsNullOrEmpty(fromServer) || string.IsNullOrEmpty(toServer))
+            foreach (DataTable dataTable in OctopusConfig.dataTableList)
             {
-                Messages.WriteError("The configuration of fromServer or toServer is empty");
-            }
-            else
-            {
-                List<DataSource> FromDataSources = new List<DataSource>();
-                List<DataSource> ToDataSources = new List<DataSource>();
+                string fromServer = dataTable.ExtendedProperties["FromServer"].ToString();
+                string toServer = dataTable.ExtendedProperties["ToServer"].ToString();
+                DataSource fromDataSource = null;
+                DataSource toDataSource = null;
 
-                (FromDataSources, ToDataSources) = ReadDbDefinitions(dataTableList.Select(x => x.ExtendedProperties["FromServer"].ToString()).Distinct().ToList()
-                                                                                         ,dataTableList.Select(x => x.ExtendedProperties["ToServer"].ToString()).Distinct().ToList()
-                                                                                         ,dataTableList);
+                if (dataSources.ContainsKey(fromServer))
+                    fromDataSource = dataSources[fromServer];
 
-                int processedTableCount = 0;
-                foreach (DataTable dataTable in dataTableList)
+                if (dataSources.ContainsKey(toServer))
+                    toDataSource = dataSources[toServer];
+
+                if (fromDataSource == null || toDataSource == null)
                 {
-                    //TODO check for SQL Injection
-                    //Messages.WriteQuestion(dataTable.TableName);
-                    lMemoryMB = GC.GetTotalMemory(true/* true = Collect garbage before measuring */) / 1024 / 1024; // memory in megabytes
-                    ProgressBar.WriteProgressBar(processedTableCount*100/dataTableList.Count,processedTableCount,dataTableList.Count, lMemoryMB, true, dataTable.TableName);
-                    FromDataSources[Convert.ToInt32(dataTable.ExtendedProperties["FromServerIndex"].ToString())].ReadTable(dataTable);
-                    ToDataSources[Convert.ToInt32(dataTable.ExtendedProperties["ToServerIndex"].ToString())].WriteTable(dataTable);
-                    Messages.WriteQuestion("==================================================="); //Little separator
-
-                    /* Dispose of the used dataTable to clear memory */
-                    dataTable.PrimaryKey = null;
-                    dataTable.Rows.Clear();
-                    dataTable.Columns.Clear();
-                    dataTable.Clear();
-                    GC.Collect(); //Force collect
-                    processedTableCount++;
+                    Messages.WriteError($"{dataTable.TableName}'s origin or destiny dataSource is not correctly defined");
+                    continue;
                 }
-            }
 
+                if (!(fromDataSource.fromServer))
+                {
+                    Messages.WriteError($"{fromServer} is not implemented yet as origin BD");
+                    continue;
+                }
+
+                if (!(toDataSource.toServer))
+                {
+                    Messages.WriteError($"{toServer} is not implemented yet as destiny BD");
+                    continue;
+                }
+
+                MemoryMB = GC.GetTotalMemory(true) / 1024 / 1024; // memory in megabytes, true = Collect garbage before measuring
+                ProgressBar.WriteProgressBar(proccessedTables * 100 / totalTables, proccessedTables, totalTables, MemoryMB, true, dataTable.TableName);
+
+                fromDataSource.ReadTable(dataTable);
+                toDataSource.WriteTable(dataTable);
+                CleanDataTable(dataTable); // Dispose of the used dataTable to clear memory
+
+                proccessedTables++;
+            }
             Messages.WriteSuccess("End of process: " + DateTime.Now.ToString());
-            Messages.WriteSuccess("DONE");
+        }
+
+        public void GenerateDataSource()
+        {
+            OctopusFactory octopusFactory = new OctopusFactory();
+            string JsonFileName = "DbDefinitions.json";
+            string JsonPath = AppDomain.CurrentDomain.BaseDirectory + JsonFileName;
+
+            DbDefinitionList dbDefinitions = octopusFactory.ReadJson(JsonPath);
+
+            foreach (DbDefinition dbDefinition in dbDefinitions.dbDefinitions)
+            {
+                dataSources.Add(dbDefinition.name,octopusFactory.InstantiateDataSource(dbDefinition));
+            }
+        }
+
+        public void CleanDataTable(DataTable dataTable) 
+        {
+            dataTable.PrimaryKey = null;
+            dataTable.Rows.Clear();
+            dataTable.Columns.Clear();
+            dataTable.Clear();
+            GC.Collect(); //Force collect
+        }
+    }
+
+    public class OctopusFactory
+    {
+        /// <summary>
+        /// Deserialize JSON and returns a DbDefinitionList
+        /// </summary>
+        /// <param name="file"></param>
+        /// <returns></returns>
+        public DbDefinitionList ReadJson(string file)
+        {
+            return JsonConvert.DeserializeObject<DbDefinitionList>(File.ReadAllText(file));
         }
 
         /// <summary>
-        /// Reads JSON Dbdefinitions and tries to instantiate the objects requested by App.config file
+        /// Instantiates data source from a database definition and returns it
         /// </summary>
-        /// <param name="fromServer"></param>
-        /// <param name="toServer"></param>
-        /// <returns></returns>
-        public static (List<DataSource> fromDataSource, List<DataSource> toDataSource) ReadDbDefinitions(List<string> fromServer, List<string> toServer, List<DataTable> dataTableList)
+        /// <param name="dbDefinition"></param>
+        public DataSource InstantiateDataSource(DbDefinition dbDefinition)
         {
-            // read file into a string and deserialize JSON to a type
-            DbDefinitionList dbList = DbDefinitionList.JSONDbDefinitions(@".\DbDefinitions.json");
-            List<DataSource> fromDataSource = new List<DataSource>();
-            List<DataSource> toDataSource = new List<DataSource>();
+            DataSource dataSource = null;
+            string objectToInstantiate = $"Octopus.modules.dbModules.{dbDefinition.className}, Octopus";
+            string connectionString = OctopusConfig.GetConnectionString(dbDefinition.connectionString);
+            var objectType = Type.GetType(objectToInstantiate);
 
-            //Create array with the values so we can use it later to filter the dbDefinitionList
-
-            //Generate from Server
-            #region GenerateFromServer
-            foreach (DbDefinition dbDefinition in dbList.dbDefinitions
-                                                            .Where(x => fromServer.Contains(x.name)) //Limit from the string list
-                                                            .ToList<DbDefinition>()
-            )
+            if (!(objectType is null))
             {
-                string connectionString;
-
-                if (!dbDefinition.fromServer)
+                if (string.IsNullOrEmpty(connectionString))
                 {
-                    Messages.WriteError($"{fromServer} is not implemented yet as origin BD");
-                    throw new NotImplementedException();
+                    Messages.WriteError($"{dbDefinition.name} connection string {dbDefinition.connectionString} is not set or is empty");
                 }
-
-                #region CheckConnectionString
-                //Check to control that the connection string is replenished if not throw error
-                try
+                else
                 {
-                    connectionString = OctopusConfig.connectionKeyValues[dbDefinition.connectionString];
-                    if (string.IsNullOrEmpty(connectionString))
-                    {
-                        Messages.WriteError($"{fromServer} connection string {dbDefinition.connectionString} is not set or is empty");
-                        throw new NotImplementedException();
-                    }
-                }
-                catch (Exception)
-                {
-                    Messages.WriteError($"{fromServer} connection string {dbDefinition.connectionString} is not set or is empty");
-                    throw;
-                }
-                #endregion
+                    dataSource = Activator.CreateInstance(objectType, connectionString) as DataSource;
 
-                string objectToInstantiate = $"Octopus.modules.dbModules.{dbDefinition.className}, Octopus";
-                var objectType = Type.GetType(objectToInstantiate);
+                    dataSource.dataSourceName = dbDefinition.name;
 
-                if (!(objectType is null))
-                {
-                    fromDataSource.Add(Activator.CreateInstance(objectType, connectionString) as DataSource);
+                    if (dbDefinition.toServer)
+                        dataSource.toServer = true;
 
-                    //For each datatable that the fromServer name coincides with the processed fromServer we add the latest index
-                    foreach (DataTable dataTable in dataTableList.Where(x => x.ExtendedProperties["FromServer"].ToString() == dbDefinition.name))
-                    {
-                        dataTable.ExtendedProperties.Add("FromServerIndex", fromDataSource.Count-1); //Minus one because the count starts from 0
-                    }
-
-                }
-                
-            }
-            #endregion
-
-            //Generate to Server
-            #region GenerateToServer
-            foreach (DbDefinition dbDefinition in dbList.dbDefinitions
-                                                .Where(x => toServer.Contains(x.name)) //Limit from the string list
-                                                .ToList<DbDefinition>()
-            )
-            {
-                string connectionString;
-
-                if (!dbDefinition.toServer)
-                {
-                    Messages.WriteError($"{toServer} is not implemented yet as destiny BD");
-                    throw new NotImplementedException();
-                }
-
-                #region CheckConnectionString
-                //Check to control that the connection string is replenished if not throw error
-                try
-                {
-                    connectionString = OctopusConfig.connectionKeyValues[dbDefinition.connectionString];
-                    if (string.IsNullOrEmpty(connectionString))
-                    {
-                        Messages.WriteError($"{toServer} connection string {dbDefinition.connectionString} is not set or is empty");
-                        throw new NotImplementedException();
-                    }
-                }
-                catch (Exception)
-                {
-                    Messages.WriteError($"{toServer} connection string {dbDefinition.connectionString} is not set or is empty");
-                    throw;
-                }
-                #endregion
-
-                string objectToInstantiate = $"Octopus.modules.dbModules.{dbDefinition.className}, Octopus";
-                var objectType = Type.GetType(objectToInstantiate);
-
-                if (!(objectType is null))
-                {
-                    toDataSource.Add(Activator.CreateInstance(objectType, connectionString) as DataSource);
-                    //For each datatable that the toServer name coincides with the processed toServer we add the latest index
-                    foreach (DataTable dataTable in dataTableList.Where(x => x.ExtendedProperties["ToServer"].ToString() == dbDefinition.name))
-                    {
-                        dataTable.ExtendedProperties.Add("ToServerIndex", toDataSource.Count-1); //Minus one because the count starts from 0
-                    }
-                }
-
-
-            }
-            #endregion
-
-            if (fromDataSource.Count == 0 || toDataSource.Count == 0) //If any datasource was not found for whatever reason, throw
-            {
-                Messages.WriteError($"{fromServer} or {toServer} module not found");
-                throw new NotImplementedException();
-            }
-
-            bool error = false; // We do it this way so we can present all of the errors to the user at once
-
-            //Check every table has an index to a datasource
-            foreach (DataTable dataTable in dataTableList)
-            { 
-                if (!(dataTable.ExtendedProperties.ContainsKey("FromServerIndex")))
-                {
-                    Messages.WriteError($"The server {dataTable.ExtendedProperties["FromServer"].ToString()} couldn't be found for table {dataTable.TableName}");
-                    error = true;
-                }
-                if (!(dataTable.ExtendedProperties.ContainsKey("ToServerIndex")))
-                {
-                    Messages.WriteError($"The server {dataTable.ExtendedProperties["ToServer"].ToString()} couldn't be found for table {dataTable.TableName}");
-                    error = true;
+                    if (dbDefinition.fromServer)
+                        dataSource.fromServer = true;
                 }
             }
 
-            if (error) 
-            {
-                Console.Read();
-                throw new NotImplementedException();
-            }
-
-            return (fromDataSource, toDataSource);
+            return dataSource;
         }
     }
 
@@ -302,6 +234,23 @@ namespace Octopus
         public static string fromServer, toServer; //Default values
         public static string fromDB,toDB; //Default values
         public static string logPath; //Default values
+
+        /// <summary>
+        /// Returns the connectionString
+        /// </summary>
+        /// <param name="key"></param>
+        /// <returns></returns>
+        public static string GetConnectionString(string key)
+        {
+            string connectionString = null;
+
+            if (OctopusConfig.connectionKeyValues.ContainsKey(key))
+            {
+                connectionString = OctopusConfig.connectionKeyValues[key];
+            }
+
+            return connectionString;
+        }
 
         /// <summary>
         /// This method reads the config file if the path is given then it will read and load that config if not, it will read the default one
@@ -339,6 +288,11 @@ namespace Octopus
                 fromDB = appSettings.Settings["fromDB"].Value;
                 toDB = appSettings.Settings["toDB"].Value;
                 logPath = appSettings.Settings["LogPath"].Value;
+            }
+            if (string.IsNullOrEmpty(fromServer) || string.IsNullOrEmpty(toServer))
+            {
+                Messages.WriteError("The configuration of fromServer or toServer is empty");
+                throw new NotImplementedException();
             }
             #endregion
 
