@@ -178,27 +178,40 @@ namespace Octopus.modules.dbModules
             {
                 while (dataReader.Read())
                 {
-                    DataRow dataRow = dataTable.NewRow();
-
-                    for (int i = 0; i < dataTable.Columns.Count; i++)
+                    try
                     {
-                        DataColumn dataColumn = dataTable.Columns[i]; // I rather have it in a different variable and ref it later
-                        
-                        object columnValue;
+                        DataRow dataRow = dataTable.NewRow();
+                        Object[] values = new Object[dataReader.FieldCount];
+
                         try
                         {
-                            columnValue = dataReader.GetValue(i);
+                            dataReader.GetValues(values);
                         }
-                        catch (InvalidCastException) when (dataReader.GetOracleValue(i) is OracleDecimal)
+                        catch (InvalidCastException)
                         {
-                            columnValue = (decimal)(OracleDecimal.SetPrecision(dataReader.GetOracleDecimal(i), 28));
+                            //We continue to load from the first null to avoid re-doing processed fields
+                            for (int i = values.ToList().IndexOf(null); i < dataTable.Columns.Count; i++)
+                            {
+                                DataColumn dataColumn = dataTable.Columns[i]; // I rather have it in a different variable and ref it later                       
+                                object columnValue;
+                                try
+                                {
+                                    columnValue = dataReader.GetValue(i);
+                                }
+                                catch (InvalidCastException) when (dataReader.GetOracleValue(i) is OracleDecimal)
+                                {
+                                    columnValue = (decimal)(OracleDecimal.SetPrecision(dataReader.GetOracleDecimal(i), 28));
+                                }
+                                values[i] = columnValue;
+                            }
                         }
-
-                        if (!(columnValue is DBNull))
-                            dataRow[dataColumn] = Convert.ChangeType(columnValue, dataColumn.DataType);
+                        dataTable.LoadDataRow(values, true);
                     }
-
-                    dataTable.Rows.Add(dataRow);
+                    catch (OutOfMemoryException)
+                    {
+                        Messages.WriteError("Run out of memory for the table");
+                        break;
+                    }
                 }
                 Messages.WriteSuccess($"Added all the rows of the table to a dataTable object {dataTable.TableName} succesfully");
             }

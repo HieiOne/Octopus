@@ -173,6 +173,7 @@ namespace Octopus
             dataTable.Rows.Clear();
             dataTable.Columns.Clear();
             dataTable.Clear();
+            dataTable.Reset();
             GC.Collect(); //Force collect
         }
     }
