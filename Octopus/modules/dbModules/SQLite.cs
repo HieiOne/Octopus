@@ -102,20 +102,6 @@ namespace Octopus.modules.dbModules
         }
 
         /// <summary>
-        /// This class must call other methods to create the Schema (Columns + Keys) of the table and add the datarows
-        /// </summary>
-        /// <param name="dataTable"></param>
-        public override void ReadTable(DataTable dataTable)
-        {
-            Connect(); // Connect to the DB
-
-            GetSchemaTable(dataTable);
-            GetRowsTable(dataTable);
-
-            Disconnect(); // Disconnects from the DB
-        }
-
-        /// <summary>
         /// Adds the dataschema to the datatable
         /// </summary>
         /// <param name="dataTable"></param>
@@ -242,7 +228,26 @@ namespace Octopus.modules.dbModules
             }
         }
 
-        public override void WriteTable(DataTable dataTable)
+
+        public override bool IsConnected()
+        {
+            if (sqliteConnection.State == ConnectionState.Open)
+                return true;
+
+            return false;
+        }
+
+        public override void DropTable(string tableName)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void CreateTable(DataTable dataTable)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void InsertRows(DataTable dataTable)
         {
             throw new NotImplementedException();
         }

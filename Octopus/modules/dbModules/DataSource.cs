@@ -80,14 +80,14 @@ namespace Octopus.modules.dbModules
         /// This class must call other methods to create the Schema (Columns + Keys) of the table and add the datarows
         /// </summary>
         /// <param name="dataTable"></param>
-        public abstract void ReadTable(DataTable dataTable);
+        //public abstract void ReadTable(DataTable dataTable);
 
         /// <summary>
         /// Creates the table (if it doesnt exist) and adds all of the rows in the DataTable set
         /// This class must call other methods to create the table in destiny and then bulk copy the rows
         /// </summary>
         /// <param name="dataTable"></param>
-        public abstract void WriteTable(DataTable dataTable);
+        //public abstract void WriteTable(DataTable dataTable);
 
 
         /// <summary>
@@ -102,6 +102,18 @@ namespace Octopus.modules.dbModules
         /// <param name="dataTable"></param>
         public abstract void GetSchemaTable(DataTable dataTable);
 
+        /// <summary>
+        /// Checks if the source is connected or not
+        /// </summary>
+        /// <returns></returns>
+        public abstract bool IsConnected();
+
+
+        public abstract void DropTable(string tableName);
+
+        public abstract void CreateTable(DataTable dataTable);
+
+        public abstract void InsertRows(DataTable dataTable);
 
     }
 }

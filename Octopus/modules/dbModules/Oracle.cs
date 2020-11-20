@@ -101,21 +101,6 @@ namespace Octopus.modules.dbModules
             throw new NotImplementedException();
         }
 
-        public override void ReadTable(DataTable dataTable)
-        {
-            Connect();
-
-            GetSchemaTable(dataTable);
-            GetRowsTable(dataTable);
-
-            Disconnect();
-        }
-
-        public override void WriteTable(DataTable dataTable)
-        {
-            throw new NotImplementedException();
-        }
-
         /// <summary>
         /// Adds the dataschema to the datatable
         /// </summary>
@@ -249,5 +234,27 @@ namespace Octopus.modules.dbModules
             }
         }
 
+        public override bool IsConnected()
+        {
+            if (oracleConnection.State == ConnectionState.Open)
+                return true;
+
+            return false;
+        }
+
+        public override void DropTable(string tableName)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void CreateTable(DataTable dataTable)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void InsertRows(DataTable dataTable)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

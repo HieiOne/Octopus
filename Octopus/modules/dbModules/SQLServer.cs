@@ -118,31 +118,7 @@ namespace Octopus.modules.dbModules
         public override void OpenReader(string query, int limit)
         {
             throw new NotImplementedException();
-        }
-        
-        public override void ReadTable(DataTable dataTable)
-        {
-            throw new NotImplementedException();
-        }
-
-        public override void WriteTable(DataTable dataTable)
-        {
-            if(dataTable.Columns.Count > 0) //If it has any columns
-            {
-                Connect(); // Connect to the DB
-                BeginTransaction(); //TTSBegin, we create everything or nothing
-                
-                DropTable($"{dataTable.Prefix}{dataTable.TableName}");
-                CreateTable(dataTable); //TODO Check if table has changes and update instead of dropping and creating.
-                if(dataTable.Rows.Count > 0) //If it has any rows
-                    InsertRows(dataTable);
-                
-                CommitTransaction(); //TTSCommit, we create everything or nothing
-                Messages.WriteSuccess("Commited changes");
-                
-                Disconnect(); // Disconnects from the DB
-            }
-        }
+        }        
 
         /// <summary>
         /// Checks if table exists and returns bool
@@ -177,7 +153,7 @@ namespace Octopus.modules.dbModules
         /// Drops table passed by parameter
         /// </summary>
         /// <param name="tableName"></param>
-        private void DropTable(string tableName)
+        public override void DropTable(string tableName)
         {
             string query = $"DROP TABLE {OctopusConfig.toDB}.dbo.{tableName}";
 
@@ -196,7 +172,7 @@ namespace Octopus.modules.dbModules
         /// Creates a table (in case it doesn't already exist) from a dataTable object
         /// </summary>
         /// <param name="dataTable"></param>
-        private void CreateTable(DataTable dataTable)
+        public override void CreateTable(DataTable dataTable)
         {
             string query;
 
@@ -279,7 +255,7 @@ namespace Octopus.modules.dbModules
             }
         }
 
-        private void InsertRows(DataTable dataTable)
+        public override void InsertRows(DataTable dataTable)
         {
             using (SqlBulkCopy bulkCopy = new SqlBulkCopy(sqlConnection,SqlBulkCopyOptions.Default,sqlTransaction))
             {
@@ -324,6 +300,14 @@ namespace Octopus.modules.dbModules
         public override void GetSchemaTable(DataTable dataTable)
         {
             throw new NotImplementedException();
+        }
+
+        public override bool IsConnected()
+        {
+            if (sqlConnection.State == ConnectionState.Open)
+                return true;
+
+            return false;
         }
     }
 }

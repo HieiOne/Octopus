@@ -148,14 +148,59 @@ namespace Octopus
 
                 MemoryMB = GC.GetTotalMemory(true) / 1024 / 1024; // memory in megabytes, true = Collect garbage before measuring
                 ProgressBar.WriteProgressBar(proccessedTables * 100 / totalTables, proccessedTables, totalTables, MemoryMB, true, dataTable.TableName);
-
+                /*
                 fromDataSource.ReadTable(dataTable);
                 toDataSource.WriteTable(dataTable);
+                */
+                ProcessTable(dataTable, fromDataSource, toDataSource);
                 CleanDataTable(dataTable); // Dispose of the used dataTable to clear memory
 
                 proccessedTables++;
             }
+
+            DisconnectAll();
             Messages.WriteSuccess("End of process: " + DateTime.Now.ToString());
+        }
+
+        /// <summary>
+        /// Moves the data from the origin to the destination
+        /// </summary>
+        /// <param name="dataTable"></param>
+        /// <param name="originSource"></param>
+        /// <param name="destinationSource"></param>
+        public void ProcessTable(DataTable dataTable, DataSource originSource, DataSource destinationSource)
+        {
+            if (!(originSource.IsConnected()))
+                originSource.Connect();
+
+            if (!(destinationSource.IsConnected()))
+                destinationSource.Connect();
+
+            //originSource
+            originSource.GetSchemaTable(dataTable);
+            originSource.GetRowsTable(dataTable);
+
+            //destinationSource
+            destinationSource.BeginTransaction(); //TTSBegin, we create everything or nothing per dataTable
+            destinationSource.DropTable($"{dataTable.Prefix}{dataTable.TableName}");
+            destinationSource.CreateTable(dataTable); //TODO Check if table has changes and update instead of dropping and creating.
+            if (dataTable.Rows.Count > 0) //If it has any rows
+                destinationSource.InsertRows(dataTable);
+
+            destinationSource.CommitTransaction(); //TTSCommit, we create everything or nothing
+            Messages.WriteSuccess("Commited Changes");
+        }
+
+        /// <summary>
+        /// Disconnects all dataSources that were opened
+        /// </summary>
+        public void DisconnectAll()
+        {
+            foreach (DataSource dataSource in dataSources.Values)
+            {
+                if(dataSource.IsConnected())
+                    dataSource.Disconnect();
+            }
         }
 
         public void CleanDataTable(DataTable dataTable) 
