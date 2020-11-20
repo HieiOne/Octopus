@@ -102,12 +102,17 @@ namespace Octopus
         Dictionary<string, DataSource> dataSources = new Dictionary<string, DataSource>();
         long MemoryMB;
 
+        public OctopusHandler() 
+        {
+            OctopusFactory octopusFactory = new OctopusFactory();
+            dataSources = octopusFactory.GenerateDataSource();
+        }
+
         public void Run()
         {
             int proccessedTables = 0;
             int totalTables = OctopusConfig.dataTableList.Count;
 
-            GenerateDataSource(); //Fills the dataSources Dictionary
             Messages.WriteSuccess("Start of process: " + DateTime.Now.ToString());
 
             foreach (DataTable dataTable in OctopusConfig.dataTableList)
@@ -151,20 +156,6 @@ namespace Octopus
                 proccessedTables++;
             }
             Messages.WriteSuccess("End of process: " + DateTime.Now.ToString());
-        }
-
-        public void GenerateDataSource()
-        {
-            OctopusFactory octopusFactory = new OctopusFactory();
-            string JsonFileName = "DbDefinitions.json";
-            string JsonPath = AppDomain.CurrentDomain.BaseDirectory + JsonFileName;
-
-            DbDefinitionList dbDefinitions = octopusFactory.ReadJson(JsonPath);
-
-            foreach (DbDefinition dbDefinition in dbDefinitions.dbDefinitions)
-            {
-                dataSources.Add(dbDefinition.name,octopusFactory.InstantiateDataSource(dbDefinition));
-            }
         }
 
         public void CleanDataTable(DataTable dataTable) 
@@ -222,6 +213,27 @@ namespace Octopus
             }
 
             return dataSource;
+        }
+
+        /// <summary>
+        /// Returns a dictionary of dataSources already instantiated
+        /// </summary>
+        /// <returns></returns>
+        public Dictionary<string, DataSource> GenerateDataSource()
+        {
+            Dictionary<string, DataSource> dataSources = new Dictionary<string, DataSource>();
+
+            string JsonFileName = "DbDefinitions.json";
+            string JsonPath = AppDomain.CurrentDomain.BaseDirectory + JsonFileName;
+
+            DbDefinitionList dbDefinitions = ReadJson(JsonPath);
+
+            foreach (DbDefinition dbDefinition in dbDefinitions.dbDefinitions)
+            {
+                dataSources.Add(dbDefinition.name, InstantiateDataSource(dbDefinition));
+            }
+
+            return dataSources;
         }
     }
 
