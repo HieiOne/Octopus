@@ -148,10 +148,7 @@ namespace Octopus
 
                 MemoryMB = GC.GetTotalMemory(true) / 1024 / 1024; // memory in megabytes, true = Collect garbage before measuring
                 ProgressBar.WriteProgressBar(proccessedTables * 100 / totalTables, proccessedTables, totalTables, MemoryMB, true, dataTable.TableName);
-                /*
-                fromDataSource.ReadTable(dataTable);
-                toDataSource.WriteTable(dataTable);
-                */
+
                 ProcessTable(dataTable, fromDataSource, toDataSource);
                 CleanDataTable(dataTable); // Dispose of the used dataTable to clear memory
 
