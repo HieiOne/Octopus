@@ -24,10 +24,13 @@ namespace Octopus
         {
             string configPath = null;
             bool show_help = false;
+            int batchSize = 1000; //Default value
 
             var p = new OptionSet() {          
-                { "c|config=", "the {NAME} of someone to greet.",
+                { "c|config=", "Indicates which config file will be used (default App.config)",
                     v => configPath = v },
+                { "b|batchSize=", "Indicates how many rows will be processed per batch (default 1000)",
+                    v => batchSize = Convert.ToInt32(v) },
                 { "v", "increase debug message verbosity",
                   v => { if (v != null) ++verbosity; } },
                 { "h|help",  "show this message and exit",
@@ -57,6 +60,8 @@ namespace Octopus
                 verbosity++;
             #endif
 
+            OctopusConfig.batchSize = batchSize;
+            
             if (verbosity > 0)
             {
                 //TODO active console or design verbosiy
@@ -99,7 +104,7 @@ namespace Octopus
 
     public class OctopusHandler
     {
-        Dictionary<string, DataSource> dataSources = new Dictionary<string, DataSource>();
+        readonly Dictionary<string, DataSource> dataSources = new Dictionary<string, DataSource>();
         long MemoryMB;
 
         public OctopusHandler() 
@@ -282,6 +287,7 @@ namespace Octopus
     static class OctopusConfig 
     {
         //This class is destined to contain the config and have it accesible from everywhere
+        public static int batchSize;
         public static int console_verbosity;
         public static List<DataTable> dataTableList = new List<DataTable>(); //List of tables to process
         public static Dictionary<string, string> connectionKeyValues = new Dictionary<string, string>();
