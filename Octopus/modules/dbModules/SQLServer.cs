@@ -112,11 +112,6 @@ namespace Octopus.modules.dbModules
             }
         }
 
-        public override void OpenReader(string query, int limit)
-        {
-            throw new NotImplementedException();
-        }        
-
         /// <summary>
         /// Checks if table exists and returns bool
         /// </summary>
@@ -289,7 +284,7 @@ namespace Octopus.modules.dbModules
             }
         }
 
-        public override void GetRowsTable(DataTable dataTable)
+        public override int GetRowsTable(DataTable dataTable)
         {
             throw new NotImplementedException();
         }
@@ -305,6 +300,11 @@ namespace Octopus.modules.dbModules
                 return true;
 
             return false;
+        }
+
+        public override void SelectAll(string tableName)
+        {
+            throw new NotImplementedException();
         }
     }
 }

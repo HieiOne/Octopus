@@ -94,11 +94,6 @@ namespace Octopus.modules.dbModules
             }
         }
 
-        public override void OpenReader(string query, int limit)
-        {
-            throw new NotImplementedException();
-        }
-
         /// <summary>
         /// Adds the dataschema to the datatable
         /// </summary>
@@ -152,59 +147,62 @@ namespace Octopus.modules.dbModules
             CloseReader();
         }
 
-        public override void GetRowsTable(DataTable dataTable)
+        public override int GetRowsTable(DataTable dataTable)
         {
-            string query = $"SELECT * FROM {dataTable.TableName}";
-            OpenReader(query);
-
             if (!(dataReader.IsClosed) && dataReader.HasRows)
             {
-                while (dataReader.Read())
+                int r;
+                for (r = 0; r < OctopusConfig.batchSize; r++)
                 {
-                    try
+                    if (dataReader.Read())
                     {
-                        DataRow dataRow = dataTable.NewRow();
-                        Object[] values = new Object[dataReader.FieldCount];
-
                         try
                         {
-                            dataReader.GetValues(values);
-                        }
-                        catch (InvalidCastException)
-                        {
-                            //We continue to load from the first null to avoid re-doing processed fields
-                            for (int i = values.ToList().IndexOf(null); i < dataTable.Columns.Count; i++)
+                            DataRow dataRow = dataTable.NewRow();
+                            Object[] values = new Object[dataReader.FieldCount];
+
+                            try
                             {
-                                DataColumn dataColumn = dataTable.Columns[i]; // I rather have it in a different variable and ref it later                       
-                                object columnValue;
-                                try
-                                {
-                                    columnValue = dataReader.GetValue(i);
-                                }
-                                catch (InvalidCastException) when (dataReader.GetOracleValue(i) is OracleDecimal)
-                                {
-                                    columnValue = (decimal)(OracleDecimal.SetPrecision(dataReader.GetOracleDecimal(i), 28));
-                                }
-                                values[i] = columnValue;
+                                dataReader.GetValues(values);
                             }
+                            catch (InvalidCastException)
+                            {
+                                //We continue to load from the first null to avoid re-doing processed fields
+                                for (int i = values.ToList().IndexOf(null); i < dataTable.Columns.Count; i++)
+                                {
+                                    DataColumn dataColumn = dataTable.Columns[i]; // I rather have it in a different variable and ref it later                       
+                                    object columnValue;
+                                    try
+                                    {
+                                        columnValue = dataReader.GetValue(i);
+                                    }
+                                    catch (InvalidCastException) when (dataReader.GetOracleValue(i) is OracleDecimal)
+                                    {
+                                        columnValue = (decimal)(OracleDecimal.SetPrecision(dataReader.GetOracleDecimal(i), 28));
+                                    }
+                                    values[i] = columnValue;
+                                }
+                            }
+                            dataTable.LoadDataRow(values, true);
                         }
-                        dataTable.LoadDataRow(values, true);
+                        catch (OutOfMemoryException)
+                        {
+                            Messages.WriteError("Run out of memory for the table");
+                            break;
+                        }
                     }
-                    catch (OutOfMemoryException)
+                    else
                     {
-                        Messages.WriteError("Run out of memory for the table");
-                        break;
+                        CloseReader();
+                        return r;
                     }
                 }
-                Messages.WriteSuccess($"Added all the rows of the table to a dataTable object {dataTable.TableName} succesfully");
-            }
-            else
-            {
-                Messages.WriteError($"The table {dataTable.TableName} has no rows or wasn't found");
-                //throw new NotImplementedException();
+                return r;
             }
 
+            Messages.WriteSuccess($"Added all the rows of the table to a dataTable object {dataTable.TableName} succesfully");
             CloseReader();
+            return 0;
         }
 
         public override void GenerateTypeDictionaries()
@@ -253,6 +251,15 @@ namespace Octopus.modules.dbModules
         public override void InsertRows(DataTable dataTable)
         {
             throw new NotImplementedException();
+        }
+
+        public override void SelectAll(string tableName)
+        {
+            string query = $"SELECT * FROM {tableName}";
+            OpenReader(query);
+
+            if(!(dataReader.HasRows))
+                Messages.WriteError($"The table {tableName} has no rows or wasn't found");
         }
     }
 }

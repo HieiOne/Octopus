@@ -92,11 +92,6 @@ namespace Octopus.modules.dbModules
             }
         }
 
-        public override void OpenReader(string query, int limit)
-        {
-            throw new NotImplementedException();
-        }
-
         /// <summary>
         /// Adds the dataschema to the datatable
         /// </summary>
@@ -173,36 +168,55 @@ namespace Octopus.modules.dbModules
         /// Adds all rows of the table to the datatable
         /// </summary>
         /// <param name="dataTable"></param>
-        public override void GetRowsTable(DataTable dataTable)
+        public override int GetRowsTable(DataTable dataTable)
         {
-            string query = $"SELECT * FROM '{dataTable.TableName}'";
-            OpenReader(query);
-            
             if (!(dataReader.IsClosed) && dataReader.HasRows)
             {
-                while (dataReader.Read())
+                int r;
+                for (r = 0; r < OctopusConfig.batchSize; r++)
                 {
-                    DataRow dataRow = dataTable.NewRow();
-
-                    for (int i = 0; i < dataTable.Columns.Count; i++)
+                    if (dataReader.Read())
                     {
-                        DataColumn dataColumn = dataTable.Columns[i]; // I rather have it in a different variable and ref it later
+                        try
+                        {
+                            DataRow dataRow = dataTable.NewRow();
+                            Object[] values = new Object[dataReader.FieldCount];
 
-                        if (!(dataReader.GetValue(i) is DBNull))
-                            dataRow[dataColumn] = Convert.ChangeType(dataReader.GetValue(i),dataColumn.DataType);
+                            try
+                            {
+                                dataReader.GetValues(values);
+                            }
+                            catch (InvalidCastException)
+                            {
+                                //We continue to load from the first null to avoid re-doing processed fields
+                                for (int i = values.ToList().IndexOf(null); i < dataTable.Columns.Count; i++)
+                                {
+                                    DataColumn dataColumn = dataTable.Columns[i]; // I rather have it in a different variable and ref it later                       
+                                    object columnValue;
+                                    columnValue = dataReader.GetValue(i);
+                                    values[i] = columnValue;
+                                }
+                            }
+                            dataTable.LoadDataRow(values, true);
+                        }
+                        catch (OutOfMemoryException)
+                        {
+                            Messages.WriteError("Run out of memory for the table");
+                            break;
+                        }
                     }
-
-                    dataTable.Rows.Add(dataRow);
+                    else
+                    {
+                        CloseReader();
+                        return r;
+                    }
                 }
-                Messages.WriteSuccess($"Added all the rows of the table to a dataTable object {dataTable.TableName} succesfully");
-            }
-            else
-            {
-                Messages.WriteError($"The table {dataTable.TableName} has no columns or wasn't found");
-                //throw new NotImplementedException();
+                return r;
             }
 
+            Messages.WriteSuccess($"Added all the rows of the table to a dataTable object {dataTable.TableName} succesfully");
             CloseReader();
+            return 0;
         }
 
         /// <summary>
@@ -246,6 +260,15 @@ namespace Octopus.modules.dbModules
         public override void InsertRows(DataTable dataTable)
         {
             throw new NotImplementedException();
+        }
+
+        public override void SelectAll(string tableName)
+        {
+            string query = $"SELECT * FROM {tableName}";
+            OpenReader(query);
+
+            if (!(dataReader.HasRows))
+                Messages.WriteError($"The table {tableName} has no rows or wasn't found");
         }
     }
 }

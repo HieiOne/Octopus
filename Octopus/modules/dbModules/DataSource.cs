@@ -42,12 +42,6 @@ namespace Octopus.modules.dbModules
         public abstract void OpenReader(string query);
 
         /// <summary>
-        /// SELECT query with limit of results
-        /// </summary>
-        /// <param name="limit"></param>
-        public abstract void OpenReader(string query, int limit);
-
-        /// <summary>
         /// Closes reader used for SELECT query
         /// </summary>
         public abstract void CloseReader();
@@ -88,7 +82,8 @@ namespace Octopus.modules.dbModules
         /// Adds all rows of the table to the datatable
         /// </summary>
         /// <param name="dataTable"></param>
-        public abstract void GetRowsTable(DataTable dataTable);
+        /// <returns>Returns the number of lines processed</returns>
+        public abstract int GetRowsTable(DataTable dataTable);
 
         /// <summary>
         /// Adds the dataschema to the datatable
@@ -109,5 +104,15 @@ namespace Octopus.modules.dbModules
 
         public abstract void InsertRows(DataTable dataTable);
 
+        /// <summary>
+        /// Opens a reader selecting all from the specified tableName
+        /// </summary>
+        /// <param name="tableName"></param>
+        public abstract void SelectAll(string tableName);
+
+        public void LoadDataReader()
+        { 
+        
+        }
     }
 }

@@ -24,7 +24,7 @@ namespace Octopus
         {
             string configPath = null;
             bool show_help = false;
-            int batchSize = 1000; //Default value
+            int batchSize = 1000; //Default value .- It should be configured accordingly to your available memory ram
 
             var p = new OptionSet() {          
                 { "c|config=", "Indicates which config file will be used (default App.config)",
@@ -180,14 +180,19 @@ namespace Octopus
 
             //originSource
             originSource.GetSchemaTable(dataTable);
-            originSource.GetRowsTable(dataTable);
+            originSource.SelectAll(dataTable.TableName);
 
-            //destinationSource
             destinationSource.BeginTransaction(); //TTSBegin, we create everything or nothing per dataTable
             destinationSource.DropTable($"{dataTable.Prefix}{dataTable.TableName}");
             destinationSource.CreateTable(dataTable); //TODO Check if table has changes and update instead of dropping and creating.
-            if (dataTable.Rows.Count > 0) //If it has any rows
-                destinationSource.InsertRows(dataTable);
+
+            while (originSource.GetRowsTable(dataTable) > 0) //As long as the returned rows is more than 0
+            {
+                if (dataTable.Rows.Count > 0) //If it has any rows
+                    destinationSource.InsertRows(dataTable);
+
+                dataTable.Rows.Clear(); //Clear the already processed rows
+            }
 
             destinationSource.CommitTransaction(); //TTSCommit, we create everything or nothing
             Messages.WriteSuccess("Commited Changes");
