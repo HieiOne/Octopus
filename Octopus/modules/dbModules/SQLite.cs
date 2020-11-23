@@ -161,51 +161,33 @@ namespace Octopus.modules.dbModules
 
         public override int GetRowsTable(DataTable dataTable)
         {
+            string query = $"SELECT * FROM '{dataTable.TableName}'";
+            OpenReader(query);
+
             if (!(dataReader.IsClosed) && dataReader.HasRows)
             {
-                int r;
-                for (r = 0; r < OctopusConfig.batchSize; r++)
+                while (dataReader.Read())
                 {
-                    if (dataReader.Read())
-                    {
-                        try
-                        {
-                            DataRow dataRow = dataTable.NewRow();
-                            Object[] values = new Object[dataReader.FieldCount];
+                    DataRow dataRow = dataTable.NewRow();
 
-                            try
-                            {
-                                dataReader.GetValues(values);
-                            }
-                            catch (InvalidCastException)
-                            {
-                                //We continue to load from the first null to avoid re-doing processed fields
-                                for (int i = values.ToList().IndexOf(null); i < dataTable.Columns.Count; i++)
-                                {
-                                    DataColumn dataColumn = dataTable.Columns[i]; // I rather have it in a different variable and ref it later                       
-                                    object columnValue;
-                                    columnValue = dataReader.GetValue(i);
-                                    values[i] = columnValue;
-                                }
-                            }
-                            dataTable.LoadDataRow(values, true);
-                        }
-                        catch (OutOfMemoryException)
-                        {
-                            Messages.WriteError("Run out of memory for the table");
-                            break;
-                        }
-                    }
-                    else
+                    for (int i = 0; i < dataTable.Columns.Count; i++)
                     {
-                        CloseReader();
-                        return r;
+                        DataColumn dataColumn = dataTable.Columns[i]; // I rather have it in a different variable and ref it later
+
+                        if (!(dataReader.GetValue(i) is DBNull))
+                            dataRow[dataColumn] = Convert.ChangeType(dataReader.GetValue(i), dataColumn.DataType);
                     }
+
+                    dataTable.Rows.Add(dataRow);
                 }
-                return r;
+                Messages.WriteSuccess($"Added all the rows of the table to a dataTable object {dataTable.TableName} succesfully");
+            }
+            else
+            {
+                Messages.WriteError($"The table {dataTable.TableName} has no columns or wasn't found");
+                //throw new NotImplementedException();
             }
 
-            Messages.WriteSuccess($"Added all the rows of the table to a dataTable object {dataTable.TableName} succesfully");
             CloseReader();
             return 0;
         }
