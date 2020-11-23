@@ -94,10 +94,6 @@ namespace Octopus.modules.dbModules
             }
         }
 
-        /// <summary>
-        /// Adds the dataschema to the datatable
-        /// </summary>
-        /// <param name="dataTable"></param>
         public override void GetSchemaTable(DataTable dataTable)
         {
             string query = $"SELECT COLUMN_ID,COLUMN_NAME,DATA_TYPE,NULLABLE,NULL as DEFAULT_VALUE,0 as PK,DATA_LENGTH,NVL(DATA_PRECISION,0) FROM USER_TAB_COLUMNS WHERE TABLE_NAME = '{dataTable.TableName}' ORDER BY 1";
@@ -260,6 +256,11 @@ namespace Octopus.modules.dbModules
 
             if(!(dataReader.HasRows))
                 Messages.WriteError($"The table {tableName} has no rows or wasn't found");
+        }
+
+        public override bool TableExists(string tableName)
+        {
+            throw new NotImplementedException();
         }
     }
 }

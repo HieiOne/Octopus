@@ -92,10 +92,6 @@ namespace Octopus.modules.dbModules
             }
         }
 
-        /// <summary>
-        /// Adds the dataschema to the datatable
-        /// </summary>
-        /// <param name="dataTable"></param>
         public override void GetSchemaTable(DataTable dataTable)
         {
             string query = $"SELECT [cid],[name],[type],[notnull],[dflt_value],[pk] FROM PRAGMA_TABLE_INFO('{dataTable.TableName}')";
@@ -137,7 +133,6 @@ namespace Octopus.modules.dbModules
                     dataColumn.DataType = SQLTypeToCShartpType[dataType];
                     dataColumn.AllowDBNull = !dataReader.GetBoolean(3); //En SQL Lite el campo es NOT NULL entonces revertimos el valor
                     dataColumn.DefaultValue = dataReader.IsDBNull(4) ? null : dataReader.GetString(4);
-                    //dataColumn.Unique = dataReader.GetInt32(5) != 0 ? true : false;
                     dataColumn.ExtendedProperties.Add("SQL_Type", dataReader.GetString(2));
                     dataColumn.ExtendedProperties.Add("Precision", precision);
                     dataColumn.ExtendedProperties.Add("Lenght", lenght);
@@ -164,10 +159,6 @@ namespace Octopus.modules.dbModules
             CloseReader();
         }
 
-        /// <summary>
-        /// Adds all rows of the table to the datatable
-        /// </summary>
-        /// <param name="dataTable"></param>
         public override int GetRowsTable(DataTable dataTable)
         {
             if (!(dataReader.IsClosed) && dataReader.HasRows)
@@ -269,6 +260,11 @@ namespace Octopus.modules.dbModules
 
             if (!(dataReader.HasRows))
                 Messages.WriteError($"The table {tableName} has no rows or wasn't found");
+        }
+
+        public override bool TableExists(string tableName)
+        {
+            throw new NotImplementedException();
         }
     }
 }

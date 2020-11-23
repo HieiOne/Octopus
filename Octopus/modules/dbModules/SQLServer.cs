@@ -112,12 +112,8 @@ namespace Octopus.modules.dbModules
             }
         }
 
-        /// <summary>
-        /// Checks if table exists and returns bool
-        /// </summary>
-        /// <param name="tableName"></param>
-        /// <returns></returns>
-        private bool TableExists(string tableName)
+
+        public override bool TableExists(string tableName)
         {
             //TODO Add config for db and schema
             bool exists = false;
@@ -141,10 +137,6 @@ namespace Octopus.modules.dbModules
             return exists;
         }
 
-        /// <summary>
-        /// Drops table passed by parameter
-        /// </summary>
-        /// <param name="tableName"></param>
         public override void DropTable(string tableName)
         {
             string query = $"DROP TABLE {OctopusConfig.toDB}.dbo.{tableName}";
@@ -160,10 +152,6 @@ namespace Octopus.modules.dbModules
             }
         }
 
-        /// <summary>
-        /// Creates a table (in case it doesn't already exist) from a dataTable object
-        /// </summary>
-        /// <param name="dataTable"></param>
         public override void CreateTable(DataTable dataTable)
         {
             string query;

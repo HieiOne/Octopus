@@ -9,19 +9,6 @@ namespace Octopus.modules.dbModules
         public bool toServer { get; set; } //Indicates if this dataSource is ready to be used as destination
 
         /// <summary>
-        /// Dictionary which converts SQL Type to C# Type
-        /// </summary>
-        /// 
-        /*
-        protected abstract Dictionary<string, Type> SQLTypeToCShartpType { get; set; }
-        //TODO Forced Dictionaries
-        /// <summary>
-        /// Dictionary which converts C# Type to SQL Type
-        /// </summary>
-        protected abstract Dictionary<Type, string> CShartpTypeToSQLType { get; set; }
-        */
-
-        /// <summary>
         /// Forces users to add the method to generate the dictionaries
         /// </summary>
         public abstract void GenerateTypeDictionaries();
@@ -64,21 +51,6 @@ namespace Octopus.modules.dbModules
         public abstract void CommitTransaction();
 
         /// <summary>
-        /// Reads the table name and adds all columns and registers into the DataTable object
-        /// This class must call other methods to create the Schema (Columns + Keys) of the table and add the datarows
-        /// </summary>
-        /// <param name="dataTable"></param>
-        //public abstract void ReadTable(DataTable dataTable);
-
-        /// <summary>
-        /// Creates the table (if it doesnt exist) and adds all of the rows in the DataTable set
-        /// This class must call other methods to create the table in destiny and then bulk copy the rows
-        /// </summary>
-        /// <param name="dataTable"></param>
-        //public abstract void WriteTable(DataTable dataTable);
-
-
-        /// <summary>
         /// Adds all rows of the table to the datatable
         /// </summary>
         /// <param name="dataTable"></param>
@@ -97,11 +69,22 @@ namespace Octopus.modules.dbModules
         /// <returns></returns>
         public abstract bool IsConnected();
 
-
+        /// <summary>
+        /// Drops table from Db
+        /// </summary>
+        /// <param name="tableName"></param>
         public abstract void DropTable(string tableName);
 
+        /// <summary>
+        /// Creates a table (in case it doesn't already exist) from a dataTable object
+        /// </summary>
+        /// <param name="dataTable"></param>
         public abstract void CreateTable(DataTable dataTable);
 
+        /// <summary>
+        /// Insert rows from a dataTable to db
+        /// </summary>
+        /// <param name="dataTable"></param>
         public abstract void InsertRows(DataTable dataTable);
 
         /// <summary>
@@ -109,6 +92,13 @@ namespace Octopus.modules.dbModules
         /// </summary>
         /// <param name="tableName"></param>
         public abstract void SelectAll(string tableName);
+
+        /// <summary>
+        /// Checks if table exists and returns bool
+        /// </summary>
+        /// <param name="tableName"></param>
+        /// <returns></returns>
+        public abstract bool TableExists(string tableName);
 
         public void LoadDataReader()
         { 
