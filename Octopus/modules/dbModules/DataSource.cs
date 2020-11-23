@@ -55,13 +55,13 @@ namespace Octopus.modules.dbModules
         /// </summary>
         /// <param name="dataTable"></param>
         /// <returns>Returns the number of lines processed</returns>
-        public abstract int GetRowsTable(DataTable dataTable);
+        public abstract int AddRows(DataTable dataTable);
 
         /// <summary>
         /// Adds the dataschema to the datatable
         /// </summary>
         /// <param name="dataTable"></param>
-        public abstract void GetSchemaTable(DataTable dataTable);
+        public abstract void AddSchema(DataTable dataTable);
 
         /// <summary>
         /// Checks if the source is connected or not

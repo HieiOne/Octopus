@@ -272,12 +272,12 @@ namespace Octopus.modules.dbModules
             }
         }
 
-        public override int GetRowsTable(DataTable dataTable)
+        public override int AddRows(DataTable dataTable)
         {
             throw new NotImplementedException();
         }
 
-        public override void GetSchemaTable(DataTable dataTable)
+        public override void AddSchema(DataTable dataTable)
         {
             throw new NotImplementedException();
         }

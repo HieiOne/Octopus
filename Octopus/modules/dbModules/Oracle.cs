@@ -94,7 +94,7 @@ namespace Octopus.modules.dbModules
             }
         }
 
-        public override void GetSchemaTable(DataTable dataTable)
+        public override void AddSchema(DataTable dataTable)
         {
             string query = $"SELECT COLUMN_ID,COLUMN_NAME,DATA_TYPE,NULLABLE,NULL as DEFAULT_VALUE,0 as PK,DATA_LENGTH,NVL(DATA_PRECISION,0) FROM USER_TAB_COLUMNS WHERE TABLE_NAME = '{dataTable.TableName}' ORDER BY 1";
             OpenReader(query);
@@ -143,7 +143,7 @@ namespace Octopus.modules.dbModules
             CloseReader();
         }
 
-        public override int GetRowsTable(DataTable dataTable)
+        public override int AddRows(DataTable dataTable)
         {
             if (!(dataReader.IsClosed) && dataReader.HasRows)
             {
@@ -254,7 +254,7 @@ namespace Octopus.modules.dbModules
             string query = $"SELECT * FROM {tableName}";
             OpenReader(query);
 
-            if(!(dataReader.HasRows))
+            if(dataReader.IsClosed || !(dataReader.HasRows))
                 Messages.WriteError($"The table {tableName} has no rows or wasn't found");
         }
 

@@ -179,14 +179,14 @@ namespace Octopus
                 destinationSource.Connect();
 
             //originSource
-            originSource.GetSchemaTable(dataTable);
+            originSource.AddSchema(dataTable);
             originSource.SelectAll(dataTable.TableName);
 
             destinationSource.BeginTransaction(); //TTSBegin, we create everything or nothing per dataTable
             destinationSource.DropTable($"{dataTable.Prefix}{dataTable.TableName}");
             destinationSource.CreateTable(dataTable); //TODO Check if table has changes and update instead of dropping and creating.
 
-            while (originSource.GetRowsTable(dataTable) > 0) //As long as the returned rows is more than 0
+            while (originSource.AddRows(dataTable) > 0) //As long as the returned rows is more than 0
             {
                 if (dataTable.Rows.Count > 0) //If it has any rows
                     destinationSource.InsertRows(dataTable);

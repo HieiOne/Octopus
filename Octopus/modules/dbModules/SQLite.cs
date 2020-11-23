@@ -92,7 +92,7 @@ namespace Octopus.modules.dbModules
             }
         }
 
-        public override void GetSchemaTable(DataTable dataTable)
+        public override void AddSchema(DataTable dataTable)
         {
             string query = $"SELECT [cid],[name],[type],[notnull],[dflt_value],[pk] FROM PRAGMA_TABLE_INFO('{dataTable.TableName}')";
             OpenReader(query);
@@ -159,7 +159,7 @@ namespace Octopus.modules.dbModules
             CloseReader();
         }
 
-        public override int GetRowsTable(DataTable dataTable)
+        public override int AddRows(DataTable dataTable)
         {
             string query = $"SELECT * FROM '{dataTable.TableName}'";
             OpenReader(query);
@@ -240,7 +240,7 @@ namespace Octopus.modules.dbModules
             string query = $"SELECT * FROM {tableName}";
             OpenReader(query);
 
-            if (!(dataReader.HasRows))
+            if (dataReader.IsClosed || !(dataReader.HasRows))
                 Messages.WriteError($"The table {tableName} has no rows or wasn't found");
         }
 
