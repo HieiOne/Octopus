@@ -156,7 +156,7 @@ namespace Octopus.modules.dbModules
                     try
                     {
                         dataReader.GetValues(values);
-                        dataTable.LoadDataRow(values, true);
+                        dataTable.Rows.Add(values);
                     }
                     catch (InvalidCastException)
                     {

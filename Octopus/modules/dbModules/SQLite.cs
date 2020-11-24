@@ -161,35 +161,39 @@ namespace Octopus.modules.dbModules
 
         public override int AddRows(DataTable dataTable)
         {
-            string query = $"SELECT * FROM '{dataTable.TableName}'";
-            OpenReader(query);
+            int count = 0;
 
             if (!(dataReader.IsClosed) && dataReader.HasRows)
             {
-                while (dataReader.Read())
+                while (dataReader.Read() && count < OctopusConfig.batchSize)
                 {
-                    DataRow dataRow = dataTable.NewRow();
+                    Object[] values = new Object[dataReader.FieldCount];
 
-                    for (int i = 0; i < dataTable.Columns.Count; i++)
+                    try
                     {
-                        DataColumn dataColumn = dataTable.Columns[i]; // I rather have it in a different variable and ref it later
-
-                        if (!(dataReader.GetValue(i) is DBNull))
-                            dataRow[dataColumn] = Convert.ChangeType(dataReader.GetValue(i), dataColumn.DataType);
+                        dataReader.GetValues(values);
+                        dataTable.Rows.Add(values);
                     }
-
-                    dataTable.Rows.Add(dataRow);
+                    catch (OutOfMemoryException)
+                    {
+                        Messages.WriteError("Run out of memory for the table");
+                        return count; //We return it so even if it runs out of memory we can keep running after the rows are cleaned
+                    }
+                    finally
+                    {
+                        count++;
+                    }
                 }
-                Messages.WriteSuccess($"Added all the rows of the table to a dataTable object {dataTable.TableName} succesfully");
-            }
-            else
-            {
-                Messages.WriteError($"The table {dataTable.TableName} has no columns or wasn't found");
-                //throw new NotImplementedException();
+
+                //If the quantity processed is different than the batch size, there's no more rows in the table, in case it ends exactly at that point by sheer coincidence in the next run it will end
+                if (count != OctopusConfig.batchSize)
+                    CloseReader();
+
+                return count;
             }
 
-            CloseReader();
-            return 0;
+            Messages.WriteSuccess($"Added all the rows of the table to a dataTable object {dataTable.TableName} succesfully");
+            return count;
         }
 
         /// <summary>
