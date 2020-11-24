@@ -24,7 +24,7 @@ namespace Octopus
         {
             string configPath = null;
             bool show_help = false;
-            int batchSize = 1000; //Default value .- It should be configured accordingly to your available memory ram
+            int batchSize = 10000; //Default value .- It should be configured accordingly to your available memory ram
 
             var p = new OptionSet() {          
                 { "c|config=", "Indicates which config file will be used (default App.config)",
