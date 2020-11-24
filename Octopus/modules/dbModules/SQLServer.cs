@@ -294,5 +294,9 @@ namespace Octopus.modules.dbModules
         {
             throw new NotImplementedException();
         }
+        protected override Object[] LoadDataTableException(Object[] values, DataTable dataTable, Exception exception = null)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

@@ -161,39 +161,7 @@ namespace Octopus.modules.dbModules
 
         public override int AddRows(DataTable dataTable)
         {
-            int count = 0;
-
-            if (!(dataReader.IsClosed) && dataReader.HasRows)
-            {
-                while (dataReader.Read() && count < OctopusConfig.batchSize)
-                {
-                    Object[] values = new Object[dataReader.FieldCount];
-
-                    try
-                    {
-                        dataReader.GetValues(values);
-                        dataTable.Rows.Add(values);
-                    }
-                    catch (OutOfMemoryException)
-                    {
-                        Messages.WriteError("Run out of memory for the table");
-                        return count; //We return it so even if it runs out of memory we can keep running after the rows are cleaned
-                    }
-                    finally
-                    {
-                        count++;
-                    }
-                }
-
-                //If the quantity processed is different than the batch size, there's no more rows in the table, in case it ends exactly at that point by sheer coincidence in the next run it will end
-                if (count != OctopusConfig.batchSize)
-                    CloseReader();
-
-                return count;
-            }
-
-            Messages.WriteSuccess($"Added all the rows of the table to a dataTable object {dataTable.TableName} succesfully");
-            return count;
+            return LoadDataTable(dataReader, dataTable);
         }
 
         /// <summary>
@@ -249,6 +217,11 @@ namespace Octopus.modules.dbModules
         }
 
         public override bool TableExists(string tableName)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected override Object[] LoadDataTableException(Object[] values, DataTable dataTable, Exception exception = null)
         {
             throw new NotImplementedException();
         }
