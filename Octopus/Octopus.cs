@@ -205,7 +205,7 @@ namespace Octopus
         {
             foreach (DataSource dataSource in dataSources.Values)
             {
-                if(dataSource.IsConnected())
+                if(dataSource != null && dataSource.IsConnected())
                     dataSource.Disconnect();
             }
         }
