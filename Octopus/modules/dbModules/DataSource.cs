@@ -151,7 +151,13 @@ namespace Octopus.modules.dbModules
             return count;
         }
 
-
+        /// <summary>
+        /// In case of InvalidCastException in LoadDataTable it will call a personalized way of loading rows in the module
+        /// </summary>
+        /// <param name="values"></param>
+        /// <param name="dataTable"></param>
+        /// <param name="exception"></param>
+        /// <returns>Returns the same param values but replenished</returns>
         protected abstract Object[] LoadDataTableException(Object[] values, DataTable dataTable, Exception exception = null);
     }
 }
