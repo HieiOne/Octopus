@@ -29,7 +29,7 @@ namespace Octopus
             var p = new OptionSet() {          
                 { "c|config=", "Indicates which config file will be used (default App.config)",
                     v => configPath = v },
-                { "b|batchSize=", "Indicates how many rows will be processed per batch (default 1000)",
+                { "b|batchSize=", "Indicates how many rows will be processed per batch (default 10000)",
                     v => batchSize = Convert.ToInt32(v) },
                 { "v", "increase debug message verbosity",
                   v => { if (v != null) ++verbosity; } },
