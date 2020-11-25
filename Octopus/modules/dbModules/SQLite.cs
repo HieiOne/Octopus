@@ -1,13 +1,9 @@
 ﻿using Microsoft.Data.Sqlite;
 using Octopus.modules.messages;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.Common;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Octopus.modules.dbModules
 {
@@ -96,30 +92,7 @@ namespace Octopus.modules.dbModules
             }
         }
 
-        public override void OpenReader(string query, int limit)
-        {
-            throw new NotImplementedException();
-        }
-
-        /// <summary>
-        /// This class must call other methods to create the Schema (Columns + Keys) of the table and add the datarows
-        /// </summary>
-        /// <param name="dataTable"></param>
-        public override void ReadTable(DataTable dataTable)
-        {
-            Connect(); // Connect to the DB
-
-            GetSchemaTable(dataTable);
-            GetRowsTable(dataTable);
-
-            Disconnect(); // Disconnects from the DB
-        }
-
-        /// <summary>
-        /// Adds the dataschema to the datatable
-        /// </summary>
-        /// <param name="dataTable"></param>
-        public override void GetSchemaTable(DataTable dataTable)
+        public override void AddSchema(DataTable dataTable)
         {
             string query = $"SELECT [cid],[name],[type],[notnull],[dflt_value],[pk] FROM PRAGMA_TABLE_INFO('{dataTable.TableName}')";
             OpenReader(query);
@@ -160,7 +133,6 @@ namespace Octopus.modules.dbModules
                     dataColumn.DataType = SQLTypeToCShartpType[dataType];
                     dataColumn.AllowDBNull = !dataReader.GetBoolean(3); //En SQL Lite el campo es NOT NULL entonces revertimos el valor
                     dataColumn.DefaultValue = dataReader.IsDBNull(4) ? null : dataReader.GetString(4);
-                    //dataColumn.Unique = dataReader.GetInt32(5) != 0 ? true : false;
                     dataColumn.ExtendedProperties.Add("SQL_Type", dataReader.GetString(2));
                     dataColumn.ExtendedProperties.Add("Precision", precision);
                     dataColumn.ExtendedProperties.Add("Lenght", lenght);
@@ -187,40 +159,9 @@ namespace Octopus.modules.dbModules
             CloseReader();
         }
 
-        /// <summary>
-        /// Adds all rows of the table to the datatable
-        /// </summary>
-        /// <param name="dataTable"></param>
-        public override void GetRowsTable(DataTable dataTable)
+        public override int AddRows(DataTable dataTable)
         {
-            string query = $"SELECT * FROM '{dataTable.TableName}'";
-            OpenReader(query);
-            
-            if (!(dataReader.IsClosed) && dataReader.HasRows)
-            {
-                while (dataReader.Read())
-                {
-                    DataRow dataRow = dataTable.NewRow();
-
-                    for (int i = 0; i < dataTable.Columns.Count; i++)
-                    {
-                        DataColumn dataColumn = dataTable.Columns[i]; // I rather have it in a different variable and ref it later
-
-                        if (!(dataReader.GetValue(i) is DBNull))
-                            dataRow[dataColumn] = Convert.ChangeType(dataReader.GetValue(i),dataColumn.DataType);
-                    }
-
-                    dataTable.Rows.Add(dataRow);
-                }
-                Messages.WriteSuccess($"Added all the rows of the table to a dataTable object {dataTable.TableName} succesfully");
-            }
-            else
-            {
-                Messages.WriteError($"The table {dataTable.TableName} has no columns or wasn't found");
-                //throw new NotImplementedException();
-            }
-
-            CloseReader();
+            return LoadDataTable(dataReader, dataTable);
         }
 
         /// <summary>
@@ -242,7 +183,45 @@ namespace Octopus.modules.dbModules
             }
         }
 
-        public override void WriteTable(DataTable dataTable)
+
+        public override bool IsConnected()
+        {
+            if (sqliteConnection.State == ConnectionState.Open)
+                return true;
+
+            return false;
+        }
+
+        public override void DropTable(string tableName)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void CreateTable(DataTable dataTable)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void InsertRows(DataTable dataTable)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void SelectAll(string tableName)
+        {
+            string query = $"SELECT * FROM {tableName}";
+            OpenReader(query);
+
+            if (dataReader.IsClosed || !(dataReader.HasRows))
+                Messages.WriteError($"The table {tableName} has no rows or wasn't found");
+        }
+
+        public override bool TableExists(string tableName)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected override Object[] LoadDataTableException(Object[] values, DataTable dataTable, Exception exception = null)
         {
             throw new NotImplementedException();
         }

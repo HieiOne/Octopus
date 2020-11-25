@@ -1,12 +1,9 @@
 using Octopus.modules.messages;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace Octopus.modules.dbModules
 {
@@ -115,41 +112,8 @@ namespace Octopus.modules.dbModules
             }
         }
 
-        public override void OpenReader(string query, int limit)
-        {
-            throw new NotImplementedException();
-        }
-        
-        public override void ReadTable(DataTable dataTable)
-        {
-            throw new NotImplementedException();
-        }
 
-        public override void WriteTable(DataTable dataTable)
-        {
-            if(dataTable.Columns.Count > 0) //If it has any columns
-            {
-                Connect(); // Connect to the DB
-                BeginTransaction(); //TTSBegin, we create everything or nothing
-                
-                DropTable($"{dataTable.Prefix}{dataTable.TableName}");
-                CreateTable(dataTable); //TODO Check if table has changes and update instead of dropping and creating.
-                if(dataTable.Rows.Count > 0) //If it has any rows
-                    InsertRows(dataTable);
-                
-                CommitTransaction(); //TTSCommit, we create everything or nothing
-                Messages.WriteSuccess("Commited changes");
-                
-                Disconnect(); // Disconnects from the DB
-            }
-        }
-
-        /// <summary>
-        /// Checks if table exists and returns bool
-        /// </summary>
-        /// <param name="tableName"></param>
-        /// <returns></returns>
-        private bool TableExists(string tableName)
+        public override bool TableExists(string tableName)
         {
             //TODO Add config for db and schema
             bool exists = false;
@@ -173,11 +137,7 @@ namespace Octopus.modules.dbModules
             return exists;
         }
 
-        /// <summary>
-        /// Drops table passed by parameter
-        /// </summary>
-        /// <param name="tableName"></param>
-        private void DropTable(string tableName)
+        public override void DropTable(string tableName)
         {
             string query = $"DROP TABLE {OctopusConfig.toDB}.dbo.{tableName}";
 
@@ -192,11 +152,7 @@ namespace Octopus.modules.dbModules
             }
         }
 
-        /// <summary>
-        /// Creates a table (in case it doesn't already exist) from a dataTable object
-        /// </summary>
-        /// <param name="dataTable"></param>
-        private void CreateTable(DataTable dataTable)
+        public override void CreateTable(DataTable dataTable)
         {
             string query;
 
@@ -279,7 +235,7 @@ namespace Octopus.modules.dbModules
             }
         }
 
-        private void InsertRows(DataTable dataTable)
+        public override void InsertRows(DataTable dataTable)
         {
             using (SqlBulkCopy bulkCopy = new SqlBulkCopy(sqlConnection,SqlBulkCopyOptions.Default,sqlTransaction))
             {
@@ -316,12 +272,29 @@ namespace Octopus.modules.dbModules
             }
         }
 
-        public override void GetRowsTable(DataTable dataTable)
+        public override int AddRows(DataTable dataTable)
         {
             throw new NotImplementedException();
         }
 
-        public override void GetSchemaTable(DataTable dataTable)
+        public override void AddSchema(DataTable dataTable)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override bool IsConnected()
+        {
+            if (sqlConnection.State == ConnectionState.Open)
+                return true;
+
+            return false;
+        }
+
+        public override void SelectAll(string tableName)
+        {
+            throw new NotImplementedException();
+        }
+        protected override Object[] LoadDataTableException(Object[] values, DataTable dataTable, Exception exception = null)
         {
             throw new NotImplementedException();
         }

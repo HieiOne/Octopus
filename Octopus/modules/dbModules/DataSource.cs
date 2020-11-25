@@ -1,27 +1,15 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
+﻿using Octopus.modules.messages;
+using System;
 using System.Data;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Data.Common;
 
 namespace Octopus.modules.dbModules
 {
     public abstract class DataSource
     {
-        /// <summary>
-        /// Dictionary which converts SQL Type to C# Type
-        /// </summary>
-        /// 
-        /*
-        protected abstract Dictionary<string, Type> SQLTypeToCShartpType { get; set; }
-        //TODO Forced Dictionaries
-        /// <summary>
-        /// Dictionary which converts C# Type to SQL Type
-        /// </summary>
-        protected abstract Dictionary<Type, string> CShartpTypeToSQLType { get; set; }
-        */
+        public string dataSourceName { get; set; } //DataSource name
+        public bool fromServer { get; set; } //Indicates if this dataSource is ready to be used as origin
+        public bool toServer { get; set; } //Indicates if this dataSource is ready to be used as destination
 
         /// <summary>
         /// Forces users to add the method to generate the dictionaries
@@ -42,12 +30,6 @@ namespace Octopus.modules.dbModules
         /// SELECT query
         /// </summary>
         public abstract void OpenReader(string query);
-
-        /// <summary>
-        /// SELECT query with limit of results
-        /// </summary>
-        /// <param name="limit"></param>
-        public abstract void OpenReader(string query, int limit);
 
         /// <summary>
         /// Closes reader used for SELECT query
@@ -72,32 +54,104 @@ namespace Octopus.modules.dbModules
         public abstract void CommitTransaction();
 
         /// <summary>
-        /// Reads the table name and adds all columns and registers into the DataTable object
-        /// This class must call other methods to create the Schema (Columns + Keys) of the table and add the datarows
-        /// </summary>
-        /// <param name="dataTable"></param>
-        public abstract void ReadTable(DataTable dataTable);
-
-        /// <summary>
-        /// Creates the table (if it doesnt exist) and adds all of the rows in the DataTable set
-        /// This class must call other methods to create the table in destiny and then bulk copy the rows
-        /// </summary>
-        /// <param name="dataTable"></param>
-        public abstract void WriteTable(DataTable dataTable);
-
-
-        /// <summary>
         /// Adds all rows of the table to the datatable
         /// </summary>
         /// <param name="dataTable"></param>
-        public abstract void GetRowsTable(DataTable dataTable);
+        /// <returns>Returns the number of lines processed</returns>
+        public abstract int AddRows(DataTable dataTable);
 
         /// <summary>
         /// Adds the dataschema to the datatable
         /// </summary>
         /// <param name="dataTable"></param>
-        public abstract void GetSchemaTable(DataTable dataTable);
+        public abstract void AddSchema(DataTable dataTable);
+
+        /// <summary>
+        /// Checks if the source is connected or not
+        /// </summary>
+        /// <returns></returns>
+        public abstract bool IsConnected();
+
+        /// <summary>
+        /// Drops table from Db
+        /// </summary>
+        /// <param name="tableName"></param>
+        public abstract void DropTable(string tableName);
+
+        /// <summary>
+        /// Creates a table (in case it doesn't already exist) from a dataTable object
+        /// </summary>
+        /// <param name="dataTable"></param>
+        public abstract void CreateTable(DataTable dataTable);
+
+        /// <summary>
+        /// Insert rows from a dataTable to db
+        /// </summary>
+        /// <param name="dataTable"></param>
+        public abstract void InsertRows(DataTable dataTable);
+
+        /// <summary>
+        /// Opens a reader selecting all from the specified tableName
+        /// </summary>
+        /// <param name="tableName"></param>
+        public abstract void SelectAll(string tableName);
+
+        /// <summary>
+        /// Checks if table exists and returns bool
+        /// </summary>
+        /// <param name="tableName"></param>
+        /// <returns></returns>
+        public abstract bool TableExists(string tableName);
+
+        /// <summary>
+        /// Load dataReader rows to a dataTable
+        /// </summary>
+        /// <param name="dataReader"></param>
+        /// <param name="dataTable"></param>
+        /// <returns>Count of processed rows</returns>
+        public int LoadDataTable(DbDataReader dataReader, DataTable dataTable)
+        {
+            int count = 0;
+
+            if (!(dataReader.IsClosed) && dataReader.HasRows)
+            {
+                while (dataReader.Read() && count < OctopusConfig.batchSize)
+                {
+                    Object[] values = new Object[dataReader.FieldCount];
+
+                    try
+                    {
+                        dataReader.GetValues(values);
+                        dataTable.Rows.Add(values);
+                    }
+                    catch (OutOfMemoryException)
+                    {
+                        Messages.WriteError("Run out of memory for the table");
+                        return count; //We return it so even if it runs out of memory we can keep running after the rows are cleaned
+                    }
+                    catch (InvalidCastException exception)
+                    {
+                        values = LoadDataTableException(values, dataTable, exception);
+                        dataTable.Rows.Add(values);
+                    }
+                    finally
+                    {
+                        count++;
+                    }
+                }
+
+                //If the quantity processed is different than the batch size, there's no more rows in the table, in case it ends exactly at that point by sheer coincidence in the next run it will end
+                if (count != OctopusConfig.batchSize)
+                    CloseReader();
+
+                return count;
+            }
+
+            Messages.WriteSuccess($"Added all the rows of the table to a dataTable object {dataTable.TableName} succesfully");
+            return count;
+        }
 
 
+        protected abstract Object[] LoadDataTableException(Object[] values, DataTable dataTable, Exception exception = null);
     }
 }
