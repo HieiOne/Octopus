@@ -67,7 +67,7 @@ This project is structured to allow new modules to come into action, so in case 
 	2. fromServer -> treated as bool, true means you implemented the origin mode (read)
 	3. toServer -> treated as bool, true means you implemented the destiny mode (write)
 	4. className -> the name of the module, this one is important, It has to match with the actual method you create or else it won't be able to create the instance
-	5. connectionString -> defines which connectionstring from the App.Config file the definition will use
+	5. connectionString -> Sets the connectionstring that will be used by your module (defined in the config file)
 
 2. The class has to inherit from the abstract class DataSource (which defines what methods are required, or else it won't work!)
 	1. From here you can do stuff as you wish as long as you return a fully matured DataTable with DataColumns (with DataType as C# types, for that use the dictionary properties) and DataRows.
