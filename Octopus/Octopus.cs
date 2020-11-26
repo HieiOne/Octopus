@@ -408,6 +408,8 @@ namespace Octopus
                 }
             }
             #endregion
+
+            configurationFile.EncryptConnectionString();
         }
     }
 }
