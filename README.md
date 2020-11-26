@@ -1,8 +1,10 @@
 # **OCTOPUS**
 This project is still not in v1, meaning the core isn't fully ready for any use yet. It will be ready soon though (Very soon, few adaptations so modules will have a standard)
 
+ ==================
  
 # *License GNU GPL v3, check out the full notice in LICENSE file*
+ ==================
 
 
 # **Own view about the project:**
@@ -11,6 +13,7 @@ This project is still not in v1, meaning the core isn't fully ready for any use 
 
 > #### There's a lot of casuistic, that's why this project is designed in modules with the help of a json file for the definitions. Read [How to create a new Module] if you want to create a new one. As I said, the main plan is to allow the mobility of data from anywhere to everywhere you want but that's near impossible at this stage of the project, it needs a lot of definition and work, feel free to create your own modules for this project.
 
+==================
 
 # **Features**
 
@@ -22,6 +25,7 @@ This project is still not in v1, meaning the core isn't fully ready for any use 
 * Available origin Dbs: Oracle, SQLite
 * Available destination Dbs: SQL Server
 
+==================
 
 # **Usage options**
 
@@ -38,6 +42,7 @@ This project is still not in v1, meaning the core isn't fully ready for any use 
 * h|help
 	* Show this message and exit
 
+==================
 
 # **Future of Octopus / My ideas**
 
@@ -51,6 +56,7 @@ This project is still not in v1, meaning the core isn't fully ready for any use 
 	* Maybe scheduled tasks?
 * Copy data from a table to a table with different column names, allowing user to determine the relation of columns with different names
 
+==================
 
 # **How to create your own module**
 
