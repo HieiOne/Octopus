@@ -6,7 +6,7 @@ Capability to support any origin
 
 Bulk creation of tables and moving the data (latter one optional)
 
-(I don't know how to say it any better) Allow the usage of the software as a library for anyone who wishes to implement a module and generate a DataTable (with columns and rows both optional) in a fast manner.
+Allow the usage of the software as a library for anyone who wishes to implement a module and generate a DataTable (with columns and rows both optional) in a fast manner.
 
 Configuration to copy certain columns for each table
 
