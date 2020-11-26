@@ -10,6 +10,10 @@ namespace Octopus.modules.Protection
 {
     class SectionProtection
     {
+        /*TODO SectionProtection
+        Warning for the user to use this parameter in the first run
+        Allow user to add a connection String easily after its protected
+        */
         protected void EncryptSection(Configuration config, string section)
         {
             ConfigurationSection configurationSection = config.GetSection(section);
