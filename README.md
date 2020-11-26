@@ -64,8 +64,8 @@ This project is structured to allow new modules to come into action, so in case 
 
 1. First of all is to add the new origin/destiny to the DbDefinitions.json
 	1. name -> origin name
-	2. toServer -> treated as bool, true means you implemented the destiny mode (write)
-	3. fromServer -> treated as bool, true means you implemented the origin mode (read)
+	2. fromServer -> treated as bool, true means you implemented the origin mode (read)
+	3. toServer -> treated as bool, true means you implemented the destiny mode (write)
 	4. className -> the name of the module, this one is important, It has to match with the actual method you create or else it won't be able to create the instance
 	5. connectionString -> defines which connectionstring from the App.Config file the definition will use
 
