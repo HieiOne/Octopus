@@ -102,6 +102,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="modules\ConfigurationSettings\ConfigurationFile.cs" />
     <Compile Include="modules\ConfigurationSettings\TableConfig.cs" />
     <Compile Include="modules\ConfigurationSettings\TableInstanceCollection.cs" />
     <Compile Include="modules\ConfigurationSettings\TableInstanceElement.cs" />
@@ -112,6 +113,7 @@
     <Compile Include="modules\dbModules\SQLServer.cs" />
     <Compile Include="modules\messages\Messages.cs" />
     <Compile Include="modules\messages\ProgressBar.cs" />
+    <Compile Include="modules\Protection\SectionProtection.cs" />
     <Compile Include="Octopus.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
