@@ -63,12 +63,6 @@ namespace Octopus
                 verbosity++;
             #endif
 
-            if (protectSection)
-            {
-                ConfigurationFile configurationFile = new ConfigurationFile(configPath);
-                configurationFile.EncryptConnectionString();
-                return;
-            }
 
             OctopusConfig.batchSize = batchSize;
             
@@ -76,6 +70,13 @@ namespace Octopus
             {
                 //TODO active console or design verbosiy
                 OctopusConfig.console_verbosity = verbosity;
+            }
+
+            if (protectSection)
+            {
+                ConfigurationFile configurationFile = new ConfigurationFile(configPath);
+                configurationFile.EncryptConnectionString();
+                return;
             }
 
             if (string.IsNullOrEmpty(configPath))
