@@ -21,16 +21,22 @@ namespace Octopus
         static int verbosity;
 
         static void Main(string[] args)
-        {
+        {            
             string configPath = null;
             bool show_help = false;
+            bool protectSection = false;
+            bool unprotectSection = false;
             int batchSize = 10000; //Default value .- It should be configured accordingly to your available memory ram
 
-            var p = new OptionSet() {          
+            var p = new OptionSet() {
                 { "c|config=", "Indicates which config file will be used (default App.config)",
                     v => configPath = v },
                 { "b|batchSize=", "Indicates how many rows will be processed per batch (default 10000)",
                     v => batchSize = Convert.ToInt32(v) },
+                { "p|protectSection", "Protects connection string section",
+                    v => protectSection = v != null },
+                { "u|unprotectSection", "Unprotects connection string section to add new ones",
+                    v => unprotectSection = v != null },
                 { "v", "increase debug message verbosity",
                   v => { if (v != null) ++verbosity; } },
                 { "h|help",  "show this message and exit",
@@ -60,12 +66,27 @@ namespace Octopus
                 verbosity++;
             #endif
 
+
             OctopusConfig.batchSize = batchSize;
             
             if (verbosity > 0)
             {
                 //TODO active console or design verbosiy
                 OctopusConfig.console_verbosity = verbosity;
+            }
+
+            if (protectSection)
+            {
+                ConfigurationFile configurationFile = new ConfigurationFile(configPath);
+                configurationFile.EncryptConnectionString();
+                return;
+            }
+
+            if (unprotectSection)
+            {
+                ConfigurationFile configurationFile = new ConfigurationFile(configPath);
+                configurationFile.DecryptConnectionString(true);
+                return;
             }
 
             if (string.IsNullOrEmpty(configPath))
@@ -324,22 +345,9 @@ namespace Octopus
         /// <param name="path"></param>
         public static void LoadConfig(string path = null)
         {
-            Configuration configuration = null;
-            if (path != null) // We load the specified config file
-            {
-                var map = new ExeConfigurationFileMap
-                {
-                    ExeConfigFilename = path,
-                    LocalUserConfigFilename = path,
-                    RoamingUserConfigFilename = path
-                };
-
-                configuration = ConfigurationManager.OpenMappedExeConfiguration(map, ConfigurationUserLevel.None);
-            }
-            else //We load the default config file
-            {
-                configuration = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
-            }
+            ConfigurationFile configurationFile = new ConfigurationFile(path);
+            configurationFile.DecryptConnectionString();
+            Configuration configuration = configurationFile.configuration;
 
             #region AppSettingsValues
             var appSettings = configuration.GetSection("appSettings") as AppSettingsSection;
@@ -400,6 +408,8 @@ namespace Octopus
                 }
             }
             #endregion
+
+            configurationFile.EncryptConnectionString();
         }
     }
 }
