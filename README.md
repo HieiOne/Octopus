@@ -63,17 +63,17 @@ This project is still not in v1, meaning the core isn't fully ready for any use 
 This project is structured to allow new modules to come into action, so in case there's an origin or destiny that are not yet developed you can make your own while still making use of the core of the software!
 
 1. First of all is to add the new origin/destiny to the DbDefinitions.json
-	1. name -> origin name
-	2. fromServer -> treated as bool, true means you implemented the origin mode (read)
-	3. toServer -> treated as bool, true means you implemented the destiny mode (write)
-	4. className -> the name of the module, this one is important, It has to match with the actual method you create or else it won't be able to create the instance
+	1. name -> Origin name
+	2. fromServer -> Treated as bool, true means you implemented the origin mode (read)
+	3. toServer -> Treated as bool, true means you implemented the destiny mode (write)
+	4. className -> The name of the module, this one is important, It has to match with the actual method you create or else it won't be able to create the instance
 	5. connectionString -> Sets the connectionstring that will be used by your module (defined in the config file)
 
 2. The class has to inherit from the abstract class DataSource (which defines what methods are required, or else it won't work!)
 	1. From here you can do stuff as you wish as long as you return a fully matured DataTable with DataColumns (with DataType as C# types, for that use the dictionary properties) and DataRows.
-	2. Is important the construct takes the parameter connectionString to use it while creating the instance (Check out SQL Server module as reference).
+	2. It is important that the constructor takes the parameter connectionString to use it while creating the instance (Check out SQL Server module as reference).
 	3. It is also important to generate the dictionary relating C# Types to the Db server types (Check out SQL Server module as reference).
-	4. In case the default LoadDataTable from the base class fails, it will send the error to an abstract method LoadDataTableException that has to return an array of values that will be added to the dataTable.
+	4. In case the default LoadDataTable from the base class fails, it will send the error to an abstract method LoadDataTableException that has to return an array of values that will be added to the dataTable. Different DBs can throw different exceptions for whatever the reason, in the method LoadDataTableException you can address these exceptions in a module level.
 
 3. (Optional) Don't forget to modify the keys fromServer or toServer in App.config if you wish to use the new module you created (as value use the name)
 
