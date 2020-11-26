@@ -29,17 +29,17 @@ This project is still not in v1, meaning the core isn't fully ready for any use 
 
 # **Usage options**
 
-*"c|config="
+*c|config=
 	*Indicates which config file will be used (default App.config)
-*"b|batchSize="
+*b|batchSize=
 	*Indicates how many rows will be processed per batch (default 10000)
-*"p|protectSection"
+*p|protectSection
 	*Protects connection string section
-*"u|unprotectSection"
+*u|unprotectSection
 	*Unprotects connection string section to add new ones
-*"v"
+*v
 	*Increase debug message verbosity
-*"h|help"
+*h|help
 	*Show this message and exit
 
 ==================
