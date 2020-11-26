@@ -345,7 +345,7 @@ namespace Octopus
         /// <param name="path"></param>
         public static void LoadConfig(string path = null)
         {
-            ConfigurationFile configurationFile = new ConfigurationFile();
+            ConfigurationFile configurationFile = new ConfigurationFile(path);
             configurationFile.DecryptConnectionString();
             Configuration configuration = configurationFile.configuration;
 
