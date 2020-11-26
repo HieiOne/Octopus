@@ -36,9 +36,9 @@ namespace Octopus.modules.ConfigurationSettings
             EncryptSection(configuration, "connectionStrings");
         }
 
-        public void DecryptConnectionString()
+        public void DecryptConnectionString(bool save = false)
         {
-            DecryptSection(configuration, "connectionStrings");
+            DecryptSection(configuration, "connectionStrings", save);
         }
     }
 }

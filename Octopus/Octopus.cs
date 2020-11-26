@@ -25,6 +25,7 @@ namespace Octopus
             string configPath = null;
             bool show_help = false;
             bool protectSection = false;
+            bool unprotectSection = false;
             int batchSize = 10000; //Default value .- It should be configured accordingly to your available memory ram
 
             var p = new OptionSet() {
@@ -34,6 +35,8 @@ namespace Octopus
                     v => batchSize = Convert.ToInt32(v) },
                 { "p|protectSection", "Protects connection string section",
                     v => protectSection = v != null },
+                { "u|unprotectSection", "Unprotects connection string section to add new ones",
+                    v => unprotectSection = v != null },
                 { "v", "increase debug message verbosity",
                   v => { if (v != null) ++verbosity; } },
                 { "h|help",  "show this message and exit",
@@ -76,6 +79,13 @@ namespace Octopus
             {
                 ConfigurationFile configurationFile = new ConfigurationFile(configPath);
                 configurationFile.EncryptConnectionString();
+                return;
+            }
+
+            if (unprotectSection)
+            {
+                ConfigurationFile configurationFile = new ConfigurationFile(configPath);
+                configurationFile.DecryptConnectionString(true);
                 return;
             }
 

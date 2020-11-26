@@ -26,7 +26,7 @@ namespace Octopus.modules.Protection
             }
         }
 
-        protected void DecryptSection(Configuration config, string section)
+        protected void DecryptSection(Configuration config, string section, bool save)
         {
             ConfigurationSection configurationSection = config.GetSection(section);
             if (configurationSection != null)
@@ -34,6 +34,11 @@ namespace Octopus.modules.Protection
                 if (configurationSection.SectionInformation.IsProtected)
                 {
                     configurationSection.SectionInformation.UnprotectSection();
+                    if (save)
+                    { 
+                        config.Save();
+                        Messages.WriteWarning($"Configuration section {section} succesfully unprotected");
+                    }
                 }
                 else
                 {
