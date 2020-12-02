@@ -10,6 +10,7 @@ namespace Octopus.modules.dbModules
         public string dataSourceName { get; set; } //DataSource name
         public bool fromServer { get; set; } //Indicates if this dataSource is ready to be used as origin
         public bool toServer { get; set; } //Indicates if this dataSource is ready to be used as destination
+        public string connectionStringName { get; set; } //Indicates the string id that contains the connection string
 
         /// <summary>
         /// Forces users to add the method to generate the dictionaries
