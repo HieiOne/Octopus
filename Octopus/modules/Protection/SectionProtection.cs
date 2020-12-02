@@ -23,6 +23,10 @@ namespace Octopus.modules.Protection
                     config.Save();
                     Messages.WriteSuccess($"Configuration section {section} succesfully protected");
                 }
+                else
+                {
+                    Messages.WriteQuestion($"Configuration section {section} was already protected");
+                }
             }
         }
 
