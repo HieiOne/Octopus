@@ -52,7 +52,7 @@ This project is still not in v1, meaning the core isn't fully ready for any use 
 * ~~Allow multiple origins~~ (DONE)
 	* Capability to support any origin 
 * Bulk creation of tables and moving the data (latter one optional)
-* (I don't know how to say it any better) Allow the usage of the software as a library for anyone who wishes to implement a module and generate a DataTable (with columns and rows both optional) in a fast manner.
+* Allow the usage of the software as a library for anyone who wishes to implement a module and generate a DataTable (with columns and rows both optional) in a fast manner.
 * Configuration to copy certain columns for each table
 * Sync Mode: (Why deleting and inserting all over again when we can just sync the data)
 	* Maybe scheduled tasks?
