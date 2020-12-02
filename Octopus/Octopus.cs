@@ -26,11 +26,14 @@ namespace Octopus
             bool show_help = false;
             bool protectSection = false;
             bool unprotectSection = false;
+            string connectionStringName = null;
             int batchSize = 10000; //Default value .- It should be configured accordingly to your available memory ram
 
             var p = new OptionSet() {
                 { "c|config=", "Indicates which config file will be used (default App.config)",
                     v => configPath = v },
+                { "t|testString=", "Tests all dataSource that might have the connection string specified in the parameter, returns true if any connects succesfully",
+                    v => connectionStringName = v },
                 { "b|batchSize=", "Indicates how many rows will be processed per batch (default 10000)",
                     v => batchSize = Convert.ToInt32(v) },
                 { "p|protectSection", "Protects connection string section",
@@ -106,6 +109,12 @@ namespace Octopus
                     Messages.WriteError("Config file: " + configPath + " doesn't exist");
                     return;
                 }
+            }
+
+            if (!(string.IsNullOrEmpty(connectionStringName)))
+            {
+                OctopusHandler.TestConnectionString(connectionStringName);
+                return;
             }
 
             OctopusHandler octopusHandler = new OctopusHandler();
@@ -240,6 +249,51 @@ namespace Octopus
             dataTable.Reset();
             GC.Collect(); //Force collect
         }
+
+        /// <summary>
+        /// Tests all dataSource that might have the connection string specified in the parameter, returns true if any connects succesfully
+        /// </summary>
+        /// <param name="connectionString"></param>
+        /// <returns></returns>
+        public static bool TestConnectionString(string connectionStringName)
+        {
+            bool testStatus = false;
+            OctopusHandler octopusHandler = new OctopusHandler(); //We call the construct of the class
+            List<DataSource> dataSources = new List<DataSource>();
+
+            try
+            {
+                dataSources = octopusHandler.dataSources.Values.Where(x => x.connectionStringName == connectionStringName).ToList();
+            }
+            catch (Exception)
+            {
+                Messages.WriteError($"Connection with {connectionStringName} failed");
+                return false;
+            }
+
+            if (dataSources.Count == 0)
+            {
+                Messages.WriteError($"Connection string -> {connectionStringName} <- was not configured in any Db definition, please correct it and run again.");
+            }
+            else
+            {
+                foreach (DataSource dataSource in dataSources)
+                {
+                    dataSource.Connect();
+
+                    //As long as it connects to any dataSource we return true
+                    if (dataSource.IsConnected())
+                    {
+                        Messages.WriteSuccess($"Connection to {dataSource.dataSourceName} was succesful");
+                        testStatus = true;
+                    }
+                    else
+                        Messages.WriteError($"Connection to {dataSource.dataSourceName} failed");
+                }
+            }
+
+            return testStatus;
+        }
     }
 
     public class OctopusFactory
@@ -276,6 +330,7 @@ namespace Octopus
                     dataSource = Activator.CreateInstance(objectType, connectionString) as DataSource;
 
                     dataSource.dataSourceName = dbDefinition.name;
+                    dataSource.connectionStringName = dbDefinition.connectionString;
 
                     if (dbDefinition.toServer)
                         dataSource.toServer = true;
